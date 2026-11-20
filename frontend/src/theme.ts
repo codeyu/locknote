@@ -24,7 +24,7 @@ type ThemeDocument = {
   };
 } | null | undefined;
 
-export const THEME_STORAGE_KEY = 'locknote-theme';
+export const THEME_STORAGE_KEY = 'naishomemo-theme';
 
 export const themeOptions: ThemeOption[] = [
   { id: 'apple', nameKey: 'themeApple', swatch: '#22c55e' },

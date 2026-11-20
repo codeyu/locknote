@@ -1,19 +1,29 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "locknote",
-  "outputfilename": "LockNote",
+  "name": "naishomemo",
+  "outputfilename": "NaishoMemo",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "LockNote.app",
-    "email": "support@locknote.app"
+    "name": "codeyu",
+    "email": ""
   },
   "info": {
-    "companyName": "LockNote.app",
-    "productName": "LockNote.app",
-    "productVersion": "1.1.0",
-    "copyright": "Copyright (c) 2026 LockNote.app"
+    "companyName": "NaishoMemo",
+    "productName": "NaishoMemo",
+    "productVersion": "0.1.0",
+    "copyright": "Copyright (c) 2026 NaishoMemo",
+    "fileAssociations": [
+      {
+        "ext": "naisho",
+        "name": "NaishoMemo Encrypted Note",
+        "description": "NaishoMemo 加密笔记文件",
+        "iconName": "naishoFileIcon",
+        "role": "Viewer"
+      }
+    ],
+    "comments": "NaishoMemo — encrypted offline notes"
   }
 }

@@ -1,11 +1,9 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package tags
 
 import (
 	"fmt"
-	"locknote/internal/database"
+	"naishomemo/internal/database"
 
 	"github.com/google/uuid"
 )

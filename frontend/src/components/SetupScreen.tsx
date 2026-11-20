@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Lock, Eye, EyeOff, Key, AlertCircle, Check, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Lock, Eye, EyeOff, Key, AlertCircle, Check, RefreshCw, Copy } from 'lucide-react';
 import { useStore } from '../store';
 import { useI18n } from '../i18n';
-import { isValidRecoveryKey, normalizeRecoveryKey } from '../recoveryKey';
+import { isValidRecoveryKey, normalizeRecoveryKey, recoveryKeyWeakness } from '../recoveryKey';
+import { MIN_PASSWORD_LENGTH, copyWithAutoClear, generatePassphrase } from '../passphrase';
 import * as App from '../../wailsjs/go/main/App';
 
 type Step = 'password' | 'recovery' | 'verify';
@@ -19,11 +20,42 @@ export function SetupScreen() {
   const [verifyKey, setVerifyKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [generated, setGenerated] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const cancelClipboardClearRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      cancelClipboardClearRef.current?.();
+    };
+  }, []);
+
+  const handleGeneratePassword = () => {
+    const phrase = generatePassphrase();
+    setPassword(phrase);
+    setConfirmPassword(phrase);
+    setShowPassword(true);
+    setGenerated(true);
+    setPasswordCopied(false);
+    setError('');
+  };
+
+  const handleCopyPassword = async () => {
+    if (!password) return;
+    try {
+      cancelClipboardClearRef.current?.();
+      cancelClipboardClearRef.current = await copyWithAutoClear(password);
+      setPasswordCopied(true);
+      setTimeout(() => setPasswordCopied(false), 1500);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
 
   const handleSetPassword = async () => {
     setError('');
 
-    if (password.length < 6) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
       setError(t.settings.passwordMinLength);
       return;
     }
@@ -47,6 +79,10 @@ export function SetupScreen() {
 
     if (!isValidRecoveryKey(dataKey)) {
       setError(t.auth.dataKeyLengthError);
+      return;
+    }
+    if (recoveryKeyWeakness(dataKey)) {
+      setError(t.auth.dataKeyWeak);
       return;
     }
     setDataKey(normalizeRecoveryKey(dataKey));
@@ -139,18 +175,45 @@ export function SetupScreen() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setGenerated(false);
+                  }}
+                  className="w-full pl-4 pr-28 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder={t.auth.passwordPlaceholderMin}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    title={t.auth.generatePassphrase}
+                    aria-label={t.auth.generatePassphrase}
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyPassword()}
+                    disabled={!password}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent"
+                    title={t.auth.copyPassword}
+                    aria-label={t.auth.copyPassword}
+                  >
+                    {passwordCopied ? <Check className="w-5 h-5 text-accent" /> : <Copy className="w-5 h-5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
+              {generated && (
+                <p className="mt-2 text-xs text-gray-500">{t.auth.generatedPassphraseHint}</p>
+              )}
             </div>
 
             <div>
@@ -221,6 +284,7 @@ export function SetupScreen() {
                     try {
                       const key = await App.GenerateDataKey();
                       setDataKey(key);
+                      setError('');
                     } catch (err) {
                       setError(`${t.auth.setupFailed}：${String(err)}`);
                     }
@@ -231,7 +295,11 @@ export function SetupScreen() {
                   <RefreshCw className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{t.auth.dataKeyLengthHint}</p>
+              {isValidRecoveryKey(dataKey) && recoveryKeyWeakness(dataKey) ? (
+                <p className="text-xs text-amber-600 mt-1">{t.auth.dataKeyWeak}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">{t.auth.dataKeyLengthHint}</p>
+              )}
             </div>
 
             {error && (

@@ -77,6 +77,66 @@ export namespace database {
 
 }
 
+export namespace main {
+	
+	export class SealedExportResult {
+	    path: string;
+	    omittedImages: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SealedExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.omittedImages = source["omittedImages"];
+	    }
+	}
+	
+	export class SealedImageView {
+	    id: string;
+	    name: string;
+	    dataURL: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SealedImageView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.dataURL = source["dataURL"];
+	    }
+	}
+	export class SealedFileView {
+	    path: string;
+	    fileName: string;
+	    title: string;
+	    content: string;
+	    originalName: string;
+	    sealedAt: string;
+	    images: SealedImageView[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SealedFileView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.fileName = source["fileName"];
+	        this.title = source["title"];
+	        this.content = source["content"];
+	        this.originalName = source["originalName"];
+	        this.sealedAt = source["sealedAt"];
+	        this.images = (source["images"] || []).map((item: any) => new SealedImageView(item));
+	    }
+	}
+
+}
+
 export namespace notebooks {
 	
 	export class Notebook {
@@ -205,6 +265,29 @@ export namespace notes {
 		}
 	}
 	
+
+}
+
+export namespace sealedfile {
+	
+	export class SealResult {
+	    outputPath: string;
+	    originalPath: string;
+	    removedOriginal: boolean;
+	    removeError?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SealResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.outputPath = source["outputPath"];
+	        this.originalPath = source["originalPath"];
+	        this.removedOriginal = source["removedOriginal"];
+	        this.removeError = source["removeError"];
+	    }
+	}
 
 }
 

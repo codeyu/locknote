@@ -1,239 +1,60 @@
-# LockNote.app
+# NaishoMemo
 
 [中文](./README.md) | English
 
-A simple, reliable, offline-first encrypted note-taking desktop app for Windows, macOS, and Linux.
+An offline-first, encrypted desktop note app for Windows, macOS, and Linux. Everything stays on your computer, protected by a master password and a recovery key.
 
-Official Website: https://locknote.app
-
-Author: LockNote.app <support@locknote.app>
-
-![LockNote.app Screenshot](./screenshot/locknote-screen-en.png)
+NaishoMemo is a modified version of [LockNote](https://github.com/JackyZhang8/locknote) (MIT license).
 
 ## Features
 
-- **Cross-platform desktop app** - Release packages are provided for Windows x64, macOS Apple Silicon, macOS Intel, and Linux x64
-- **Encrypted local storage** - Notes and local image attachments are encrypted with AES-256-GCM; keys are derived via Argon2id
-- **Offline-first** - Data is stored locally and works without a network connection
-- **Markdown editor** - Markdown editing with edit, preview, and split modes, optional line numbers, and convenient formatting controls
-- **Preview table of contents** - Automatically builds an h1-h6 table of contents with collapse, expand, and precise navigation; collapsed by default in split mode
-- **Mermaid flowcharts** - Supports `mermaid` and `flowchart` fenced code blocks, diagram/source switching, zoom, reset, and SVG save-as
-- **Encrypted image attachments** - Paste, drag, or insert local images into notes; images are decrypted only for in-app display
-- **Image manager** - Browse encrypted local images in a compact, virtualized grid; add, copy references, insert into notes, or delete images
-- **Markdown import/export** - Import Markdown files and export notes as Markdown; notes with images export with a timestamped assets folder
-- **Notes organization** - Manage notebooks, tags, recent notes, pinned notes, and filters for structured writing
-- **Todos** - Manage standalone tasks with priorities, due dates, subtasks, filters, and inline editing
-- **Calendar view** - View note creation/edit activity, due todos, and completed todos by date
-- **HeatMap activity view** - GitHub-style activity heatmap based on note activity and completed todos
-- **Full-text search** - Search note titles, content, and tags
-- **Version history** - Automatic history snapshots with rollback
-- **Trash** - Deleted notes move to trash and can be restored or permanently deleted
-- **Backup & restore** - Create encrypted backups, restore data, and import backups with a data key; restore verifies the backup belongs to the current vault and keeps a rollback snapshot
-- **Startup experience** - Faster Windows cold-start flow, startup progress, and first-run feature introduction
-- **Security settings** - Auto-lock dialog, password change dialog, data-key recovery, themes, and language switching
-- **No lost drafts** - Pending edits are flushed to disk before switching notes, locking, or closing the window
+- **Local encryption**: note bodies, titles, todos, images, tag names, notebook names, and attachment file names are encrypted with AES-256-GCM using keys derived with Argon2id
+- **Master password + recovery key**: at least 8 characters, with a one-click 5-word random passphrase; the 16-character random recovery key can reset the master password
+- **PIN quick unlock**: unlock with 4–12 digits after auto-lock; the master password is required after a restart or 5 wrong PINs
+- **Auto-lock**: after idle time, on minimize, and after system sleep
+- **`.naisho` encrypted files**: encrypt a `.txt` / `.md` file or a single note (with images) into one file that can be double-clicked, dropped into the window, or imported
+- **Drop to import**: drop one or more Markdown / TXT files into the window to create notes; UTF-8, GBK, Big5, and more are detected
+- **Markdown editor**: edit, preview, split view, outline, Mermaid diagrams, images
+- **Todos, calendar, tags, notebooks, smart views, history, trash**
+- **Full backups**: encrypted files plus a database snapshot; restoring keeps your current master password, PIN, and settings
 
-## Tech Stack
+## Where data is stored
 
-- **Backend**: Go + Wails v2
-- **Frontend**: React + TypeScript + TailwindCSS
-- **Storage**: SQLite (metadata) + local encrypted files (note content and image attachments)
-- **Crypto**: AES-256-GCM + Argon2id
+Everything lives in the `.naishomemo` folder in your home directory:
 
-## Development Requirements
+| Platform | Path |
+| --- | --- |
+| Windows | `C:\Users\<user>\.naishomemo` |
+| macOS / Linux | `~/.naishomemo` |
 
-- Go 1.24+
-- Node.js 18+
-- Wails CLI v2
-- Platform build tools required by Wails for your operating system
-
-## Install Wails CLI
-
-```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
-```
+To back up, copy the whole folder or use Settings → Backup → Create backup.
 
 ## Development
 
-```bash
-cd frontend
-npm install
-cd ..
+Requires Go 1.24+, Node.js 20+, and the Wails CLI v2:
 
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 wails dev
 ```
 
-### Tests
-
-Before committing, run the same checks as CI (`.github/workflows/ci.yml`):
-
-```bash
-# Backend
-go vet ./internal/... .
-go test ./internal/... .
-
-# Frontend
-cd frontend
-npx tsc --noEmit
-npm test
-```
-
-`npm test` compiles the tests with `tsconfig.test.json` into `.test-dist` and runs them with the Node built-in test runner; it must be run from the `frontend/` directory.
-
-### Mermaid Flowcharts
-
-Use a `mermaid` or `flowchart` fenced code block in Markdown. A `flowchart` fence can specify a direction after the marker, such as `TD`, `LR`, `BT`, or `RL`; `TD` is used when no direction is provided.
-
-````markdown
-```flowchart TD
-    A[User input] --> B[Parse input]
-    B --> C{Valid?}
-    C -->|yes| D[Continue]
-    C -->|no| E[Return error]
-```
-````
-
-In preview, switch between the rendered diagram and source code, then use zoom or reset controls as needed. Download opens the native Save As dialog and writes the complete SVG file.
-
-## Build
+Build:
 
 ```bash
 wails build
 ```
 
-For platform-specific builds, use the helper script:
+Run the same checks as CI before committing:
 
 ```bash
-./build.sh darwin arm64
-./build.sh darwin x86_64
-./build.sh windows amd64
-./build.sh linux amd64
-./build.sh all
+go vet ./internal/... .
+go test ./internal/... .
+
+cd frontend
+npx tsc --noEmit
+npm test
 ```
-
-See [build.md](./build.md) and [build.sh](./build.sh) for additional build options.
-
-## Download & Run
-
-Download the zip package for your system from [GitHub Releases](https://github.com/JackyZhang8/locknote/releases).
-
-| System | Release asset | How to run |
-| --- | --- | --- |
-| Windows x64 | `locknote-windows-amd64.zip` | Extract and run `LockNote.exe` |
-| macOS Apple Silicon | `locknote-darwin-arm64.zip` | Extract and open `LockNote.app` |
-| macOS Intel | `locknote-darwin-x86_64.zip` | Extract and open `LockNote.app` |
-| Linux x64 | `locknote-linux-amd64.zip` | Extract and run `./LockNote` |
-
-### Windows Notes
-
-The .zip/.exe downloaded from GitHub Releases may be marked as "from the Internet" (MOTW), which can cause:
-
-- "Windows protected your PC" (SmartScreen)
-- Slow or stuck first launch (security scan + WebView2 initialization)
-
-Workarounds (choose one):
-
-1. Recommended: Unblock the zip first, then extract
-
-   - Right click zip -> Properties -> Unblock -> Apply
-
-2. Or: Unblock the exe after extraction
-
-   - Right click exe -> Properties -> Unblock -> Apply
-
-3. PowerShell (optional):
-
-```powershell
-Unblock-File .\LockNote.exe
-# Or unblock everything in the extracted folder:
-Get-ChildItem -Recurse | Unblock-File
-```
-
-### macOS Notes
-
-- Use `locknote-darwin-arm64.zip` for Apple Silicon Macs and `locknote-darwin-x86_64.zip` for Intel Macs.
-- Release builds are packaged as `LockNote.app`.
-- If macOS still blocks the app, open System Settings -> Privacy & Security and allow the app there. Only use this for packages downloaded from the official release page.
-
-### Linux Notes
-
-```bash
-unzip locknote-linux-amd64.zip
-chmod +x LockNote
-./LockNote
-```
-
-Linux builds require GTK 3 and WebKitGTK runtime libraries. Package names vary by distribution; on Ubuntu/Debian they are typically installed with:
-
-```bash
-sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37
-```
-
-## Project Structure
-
-```
-locknote/
-├── main.go                 # Entry
-├── app.go                  # App core logic
-├── api.go                  # API methods
-├── api_diagram.go          # Desktop SVG export API
-├── build.sh                # Multi-platform build helper
-├── internal/
-│   ├── attachments/        # Encrypted image attachments
-│   ├── backup/             # Backup service
-│   ├── core/               # Shared domain types
-│   ├── crypto/             # Crypto module
-│   ├── database/           # SQLite database
-│   ├── fsutil/             # Atomic file writes
-│   ├── markdown/           # Markdown title extraction
-│   ├── notebooks/          # Notebook service
-│   ├── notes/              # Notes service
-│   ├── smartviews/         # Smart views
-│   ├── tags/               # Tags service
-│   ├── todos/              # Todo service
-│   └── version/            # Single source of truth for the version
-├── mobile/                 # Mobile bridge package
-├── tests/source/           # Cross-file source contract tests
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── i18n/           # Localization resources
-│   │   ├── store/          # Zustand state
-│   │   └── assets/         # Frontend assets
-│   ├── wailsjs/            # Generated Wails bindings
-│   └── ...
-└── docs/
-    ├── INTRO.en.md         # English introduction
-    └── INTRO.zh-CN.md      # Chinese introduction
-```
-
-The Wails entry point, same-package APIs, and tests of unexported functions remain at the root.
-Source contract tests live in tests/source/: run go test ./tests/source, or go test ./... for all Go tests.
-
-## Security Model
-
-LockNote encrypts note bodies, titles and previews, note history, attachments and thumbnails, and todo titles. Tag names, notebook names, original attachment filenames, smart-view filters, password hints, timestamps, and file counts and sizes are not encrypted.
-
-Backups contain only notes, history, and attachments; they do not contain tags, notebooks, todos, settings, or the database. **Restore Backup works only with a backup from the same vault.** To move data to another device or use a different key, use recovery-key import. If both the password and recovery key are lost, the data is unrecoverable by design.
-
-- The master key remains in memory only after unlocking and is zeroed on lock
-- Each note uses an independent random nonce
-- Recovery keys are 16-character Crockford Base32 and the data key is derived with Argon2id (legacy vaults stay compatible)
-- Ciphertext files are written with `fsync + rename`, so a power loss cannot leave a truncated file
-- The vault is checked for an existing master password before it is written, preventing accidental key overwrite
-- Database migrations are versioned; a failed migration blocks startup instead of silently degrading to an empty list
-- Restoring a backup verifies it belongs to the current vault and keeps a rollback snapshot
-- Password reset is supported through the recovery key
-
-## Changelog
-
-- [v1.1.0](./CHANGELOG-1.1.0.md)
-- [v1.0.9](./CHANGELOG-1.0.9.md)
-
-## Version
-
-v1.1.0
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](./LICENSE), which keeps the original LockNote copyright notice.

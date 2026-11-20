@@ -70,7 +70,7 @@ test('all diagram buttons update the real component; save uses the native bridge
       }));
     } }],
   });
-  const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { runScripts: 'dangerously', url: 'https://locknote.test/' });
+  const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { runScripts: 'dangerously', url: 'https://naishomemo.test/' });
   const { window } = dom;
   const channels = [];
   window.MessageChannel = class extends MessageChannel {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Upload, FileText, AlertCircle, Check, Key } from 'lucide-react';
+import { Download, Upload, FileText, AlertCircle, Check, Key, Lock, FileLock } from 'lucide-react';
 import { useStore } from '../store';
 import { formatMessage, useI18n } from '../i18n';
 import * as App from '../../wailsjs/go/main/App';
@@ -9,13 +9,15 @@ interface BackupViewProps {
 }
 
 export function BackupView({ embedded = false }: BackupViewProps) {
-  const { setNotes } = useStore();
+  const { setNotes, setTags, setNotebooks, setSealedFile } = useStore();
   const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importKey, setImportKey] = useState('');
+  const [removeOriginal, setRemoveOriginal] = useState(true);
+  const [showResidualWarning, setShowResidualWarning] = useState(false);
 
   useEffect(() => {
     if (!showRestoreConfirm) return;
@@ -59,8 +61,14 @@ export function BackupView({ embedded = false }: BackupViewProps) {
 
     try {
       await App.RestoreBackup();
-      const notesList = await App.ListNotes();
+      const [notesList, tagsList, notebooksList] = await Promise.all([
+        App.ListNotes(),
+        App.ListTags(),
+        App.ListNotebooks(),
+      ]);
       setNotes(notesList || []);
+      setTags(tagsList || []);
+      setNotebooks(notebooksList || []);
       setMessage({ type: 'success', text: t.backup.restoreSuccess });
     } catch (error) {
       setMessage({ type: 'error', text: `${t.backup.restoreFailed}：${String(error)}` });
@@ -109,6 +117,40 @@ export function BackupView({ embedded = false }: BackupViewProps) {
     } finally {
       setLoading(null);
       setImportKey('');
+    }
+  };
+
+  const handleSealTextFile = async () => {
+    setLoading('seal');
+    setMessage(null);
+    setShowResidualWarning(false);
+
+    try {
+      const result = await App.SealTextFile(removeOriginal);
+      if (result) {
+        const parts = [formatMessage(t.sealed.sealSuccess, { path: result.outputPath })];
+        if (result.removeError) {
+          parts.push(formatMessage(t.sealed.removeFailed, { error: result.removeError }));
+        } else {
+          parts.push(result.removedOriginal ? t.sealed.originalRemoved : t.sealed.originalKept);
+        }
+        setMessage({ type: result.removeError ? 'error' : 'success', text: parts.join(' ') });
+        setShowResidualWarning(result.removedOriginal);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: `${t.sealed.sealFailed}：${String(error)}` });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleOpenSealedFile = async () => {
+    setMessage(null);
+    try {
+      const path = await App.ChooseSealedFile();
+      if (path) setSealedFile({ kind: 'path', path });
+    } catch (error) {
+      setMessage({ type: 'error', text: `${t.sealed.openFailed}：${String(error)}` });
     }
   };
 
@@ -228,6 +270,59 @@ export function BackupView({ embedded = false }: BackupViewProps) {
               className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === 'importWithKey' ? t.common.loading : t.backup.importBackup}
+            </button>
+          </div>
+        </div>
+
+        <h3 className="mt-8 mb-4 font-semibold text-gray-800">{t.sealed.sectionTitle}</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="p-6 border border-gray-200 rounded-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+                <FileLock className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">{t.sealed.sealTitle}</h3>
+                <p className="text-sm text-gray-500">{t.sealed.sealDesc}</p>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 mb-4 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={removeOriginal}
+                onChange={(e) => setRemoveOriginal(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent"
+              />
+              {t.sealed.removeOriginal}
+            </label>
+            <button
+              onClick={handleSealTextFile}
+              disabled={loading !== null}
+              className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading === 'seal' ? t.common.loading : t.sealed.sealButton}
+            </button>
+            {showResidualWarning && (
+              <p className="mt-3 text-xs text-yellow-700">{t.sealed.residualWarning}</p>
+            )}
+          </div>
+
+          <div className="p-6 border border-gray-200 rounded-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+                <Lock className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">{t.sealed.openTitle}</h3>
+                <p className="text-sm text-gray-500">{t.sealed.openDesc}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleOpenSealedFile}
+              disabled={loading !== null}
+              className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {t.sealed.openButton}
             </button>
           </div>
         </div>

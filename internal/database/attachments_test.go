@@ -8,7 +8,7 @@ import (
 )
 
 func TestEnsureAttachmentSchemaAddsFavoriteColumnToExistingAttachments(t *testing.T) {
-	dbPath := filepath.Join(t.TempDir(), "locknote.db")
+	dbPath := filepath.Join(t.TempDir(), "naishomemo.db")
 	rawDB, err := sql.Open("sqlite", dbPath+"?_foreign_keys=on")
 	if err != nil {
 		t.Fatalf("open raw database: %v", err)

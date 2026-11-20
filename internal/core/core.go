@@ -1,38 +1,44 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 // core 包提供与平台无关的核心业务逻辑，可被桌面端和移动端复用。
 package core
 
 import (
 	"errors"
 	"fmt"
-	"locknote/internal/attachments"
-	"locknote/internal/backup"
-	"locknote/internal/crypto"
-	"locknote/internal/database"
-	"locknote/internal/fsutil"
-	"locknote/internal/notebooks"
-	"locknote/internal/notes"
-	"locknote/internal/smartviews"
-	"locknote/internal/tags"
-	"locknote/internal/todos"
 	"log"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/backup"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/database"
+	"naishomemo/internal/fsutil"
+	"naishomemo/internal/keypolicy"
+	"naishomemo/internal/notebooks"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/quickunlock"
+	"naishomemo/internal/sleepwatch"
+	"naishomemo/internal/smartviews"
+	"naishomemo/internal/tags"
+	"naishomemo/internal/todos"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 )
 
-const dataKeyVerifierPlaintext = "LOCKNOTE_DATAKEY_VERIFY_V1"
-const minPasswordLength = 6
+// DatabaseFileName 是数据目录中数据库文件的名字。
+const DatabaseFileName = "naishomemo.db"
 
-var errPasswordTooShort = errors.New("密码长度不能少于6个字符")
+const dataKeyVerifierPlaintext = "NAISHOMEMO_DATAKEY_VERIFY_V1"
+const minPasswordLength = 8
+
+var errPasswordTooShort = errors.New("密码长度不能少于8个字符")
+
+var errWeakRecoveryKey = errors.New("恢复密钥太容易被猜到（重复或连续的字符太多），请点击随机生成")
 
 // LockCallback 是锁定时的回调函数类型，用于通知上层（如桌面端发送事件）
 type LockCallback func()
 
-// Core 是 LockNote 的核心业务逻辑层，与平台无关
+// Core 是 NaishoMemo 的核心业务逻辑层，与平台无关
 type Core struct {
 	db                *database.DB
 	cryptoService     *crypto.Service
@@ -56,6 +62,15 @@ type Core struct {
 	lastActivity          time.Time
 	lockTimer             *time.Timer
 	lockCallback          LockCallback
+
+	// quickUnlock 在内存中保存用 PIN 包裹的 dataKey，程序退出即失效
+	quickUnlock *quickunlock.State
+
+	// sleepWatcher 检测系统睡眠，用于“休眠后锁定”
+	sleepWatcher *sleepwatch.Watcher
+
+	// fieldCipher 解锁期间供数据库层加解密元数据字段
+	fieldCipher *vaultFieldCipher
 }
 
 // SetupResult 是初始化密码后的返回结果
@@ -80,14 +95,7 @@ func New(dataDir string) (*Core, error) {
 		return nil, fmt.Errorf("failed to create history dir: %w", err)
 	}
 
-	// 处理旧版数据库迁移
-	legacyDBPath := filepath.Join(dataDir, "notebase.db")
-	dbPath := filepath.Join(dataDir, "locknote.db")
-	if _, err := os.Stat(legacyDBPath); err == nil {
-		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-			_ = os.Rename(legacyDBPath, dbPath)
-		}
-	}
+	dbPath := filepath.Join(dataDir, DatabaseFileName)
 
 	db, err := database.New(dbPath)
 	if err != nil {
@@ -107,14 +115,19 @@ func New(dataDir string) (*Core, error) {
 		dataDir:           dataDir,
 		lastActivity:      time.Now(),
 	}
+	c.quickUnlock = quickunlock.New(c.cryptoService.DeriveKey)
+	c.sleepWatcher = sleepwatch.Start(sleepwatch.DefaultInterval, sleepwatch.DefaultGap, sleepwatch.DefaultStall, c.onSystemWake)
 
 	return c, nil
 }
 
 // Close 关闭 Core，释放资源
 func (c *Core) Close() {
+	// 先停睡眠检测：它的回调会获取 c.mu，不能在持有锁时等待它退出
+	c.sleepWatcher.Stop()
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.quickUnlock.Disarm()
 	if c.lockTimer != nil {
 		c.lockTimer.Stop()
 	}
@@ -128,6 +141,26 @@ func (c *Core) SetLockCallback(cb LockCallback) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.lockCallback = cb
+}
+
+// onSystemWake 在检测到系统睡眠后调用：开启了“休眠后锁定”且当前已解锁时，立即锁定。
+func (c *Core) onSystemWake() {
+	settings, err := c.db.GetSettings()
+	if err != nil || !settings.LockOnSleep {
+		return
+	}
+	c.mu.RLock()
+	unlocked := c.isUnlocked
+	cb := c.lockCallback
+	c.mu.RUnlock()
+	if !unlocked {
+		return
+	}
+	log.Printf("[Lock] system sleep detected, locking")
+	c.Lock()
+	if cb != nil {
+		cb()
+	}
 }
 
 // GetDataDir 返回数据目录路径
@@ -193,6 +226,9 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 	if err != nil {
 		return nil, errors.New("恢复密钥格式不正确，应为 16 位字母数字")
 	}
+	if normalized, normErr := crypto.NormalizeDisplayKey(displayKey); normErr == nil && keypolicy.Check(normalized) != "" {
+		return nil, errWeakRecoveryKey
+	}
 
 	salt, err := c.cryptoService.GenerateSalt()
 	if err != nil {
@@ -206,7 +242,7 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 		return nil, err
 	}
 
-	verifier, err := c.cryptoService.Encrypt(passwordKey, []byte("LOCKNOTE_VERIFY"))
+	verifier, err := c.cryptoService.Encrypt(passwordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +261,7 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
@@ -287,8 +324,12 @@ func (c *Core) Unlock(password string) (bool, error) {
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
+
+	// 主密码解锁后，如已设置 PIN，则在内存中准备 PIN 快速解锁
+	c.armPINFromStorage(dataKey)
 
 	// startLockTimer 内部会获取锁，必须在释放锁后调用
 	c.startLockTimer()
@@ -311,6 +352,7 @@ func (c *Core) Lock() {
 	c.noteService.SetMasterKey(nil)
 	c.todoService.SetMasterKey(nil)
 	c.attachmentService.SetMasterKey(nil)
+	c.clearFieldCipherLocked()
 	if c.lockTimer != nil {
 		c.lockTimer.Stop()
 	}
@@ -377,7 +419,7 @@ func (c *Core) ChangePassword(oldPassword, newPassword, newHint string) error {
 		return err
 	}
 
-	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("LOCKNOTE_VERIFY"))
+	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		return err
 	}
@@ -423,7 +465,7 @@ func (c *Core) ResetPasswordWithDataKey(displayKey, newPassword, newHint string)
 		return err
 	}
 
-	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("LOCKNOTE_VERIFY"))
+	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		c.mu.Unlock()
 		return err
@@ -440,7 +482,10 @@ func (c *Core) ResetPasswordWithDataKey(displayKey, newPassword, newHint string)
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.mu.Unlock()
+
+	c.armPINFromStorage(dataKey)
 
 	// startLockTimer 内部会获取锁，必须在释放锁后调用
 	c.startLockTimer()
@@ -513,7 +558,17 @@ func (c *Core) startLockTimer() {
 
 // GenerateDataKey 生成一个新的恢复密钥（用于首次设置时）
 func (c *Core) GenerateDataKey() (string, error) {
-	return c.cryptoService.GenerateDataKey()
+	// 随机密钥极少数情况下会碰上“看起来有规律”的组合，重新生成即可
+	for i := 0; i < 20; i++ {
+		key, err := c.cryptoService.GenerateDataKey()
+		if err != nil {
+			return "", err
+		}
+		if keypolicy.Check(key) == "" {
+			return key, nil
+		}
+	}
+	return "", errors.New("无法生成恢复密钥，请重试")
 }
 
 // ============ 笔记相关（代理到 noteService）============
@@ -570,14 +625,32 @@ func (c *Core) RestoreBackup(path string) error {
 	if key == nil {
 		return errors.New("请先解锁")
 	}
-	if err := c.backupService.RestoreBackup(path, c.cryptoService, key); err != nil {
+	if err := c.backupService.RestoreBackupWithDatabase(path, c.cryptoService, key, c.db.RestoreFromSnapshot); err != nil {
 		return err
+	}
+	// 旧版本备份里的元数据可能是明文，恢复后补加密
+	if _, err := c.db.EncryptLegacyFields(); err != nil {
+		log.Printf("[Fields] encrypt restored legacy fields failed: %v", err)
 	}
 	c.noteService.ClearContentCache()
 	return nil
 }
 
 // ============ 设置相关 ============
+
+// CreateBackup 创建完整备份：加密文件 + 数据库快照（待办、标签、笔记本等）。
+func (c *Core) CreateBackup(outputPath string) error {
+	tempDir, err := os.MkdirTemp("", "naishomemo-backup-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tempDir)
+	snapshotPath := filepath.Join(tempDir, DatabaseFileName)
+	if err := c.db.SnapshotTo(snapshotPath); err != nil {
+		return fmt.Errorf("数据库快照失败: %w", err)
+	}
+	return c.backupService.CreateBackupWithDatabase(outputPath, snapshotPath)
+}
 
 // GetSettings 获取设置
 func (c *Core) GetSettings() (*database.Settings, error) {

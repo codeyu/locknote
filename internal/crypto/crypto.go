@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package crypto
 
 import (
@@ -24,7 +22,7 @@ const (
 	displayKeyAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 	// dataKeySaltV2 是 v2 密钥派生的固定盐。
 	// 恢复密钥需要在没有本地状态的新设备上派生出同一个 dataKey，因此盐必须是常量。
-	dataKeySaltV2 = "locknote.datakey.v2"
+	dataKeySaltV2 = "naishomemo.datakey.v2"
 )
 
 // ErrInvalidDisplayKey 表示恢复密钥格式不符合要求。

@@ -22,3 +22,31 @@ export function isValidRecoveryKey(input: string): boolean {
   }
   return true;
 }
+
+export type RecoveryKeyWeakness = 'fewDistinct' | 'repeatRun' | 'sequenceRun';
+
+/**
+ * 检查恢复密钥是否有明显规律（规则与 Go 侧 internal/keypolicy 一致）：
+ * 不同字符少于 8 个、同一字符连续 4 次以上、字符表中连续 5 个以上（如 12345、ZYXWV）。
+ * 返回 null 表示没有问题。传入未归一化的输入即可。
+ */
+export function recoveryKeyWeakness(input: string): RecoveryKeyWeakness | null {
+  const key = normalizeRecoveryKey(input);
+  if (new Set(key).size < 8) return 'fewDistinct';
+
+  let run = 1;
+  for (let i = 1; i < key.length; i++) {
+    run = key[i] === key[i - 1] ? run + 1 : 1;
+    if (run > 3) return 'repeatRun';
+  }
+
+  let up = 1;
+  let down = 1;
+  for (let i = 1; i < key.length; i++) {
+    const diff = RECOVERY_KEY_ALPHABET.indexOf(key[i]) - RECOVERY_KEY_ALPHABET.indexOf(key[i - 1]);
+    up = diff === 1 ? up + 1 : 1;
+    down = diff === -1 ? down + 1 : 1;
+    if (up > 4 || down > 4) return 'sequenceRun';
+  }
+  return null;
+}

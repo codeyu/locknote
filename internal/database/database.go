@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package database
 
 import (
@@ -62,7 +60,8 @@ func parseSQLiteTime(v any) (time.Time, error) {
 }
 
 type DB struct {
-	db *sql.DB
+	db     *sql.DB
+	fields fieldCrypto
 }
 
 type MasterPassword struct {
@@ -308,6 +307,12 @@ func (d *DB) addNotebookIdColumn() error {
 		{"notebooks", "updated_at", `ALTER TABLE notebooks ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`},
 		{"notes", "encrypted_title", `ALTER TABLE notes ADD COLUMN encrypted_title BLOB`},
 		{"notes", "encrypted_preview", `ALTER TABLE notes ADD COLUMN encrypted_preview BLOB`},
+		{"settings", "encrypted_pin", `ALTER TABLE settings ADD COLUMN encrypted_pin BLOB`},
+		{"tags", "name_enc", `ALTER TABLE tags ADD COLUMN name_enc BLOB`},
+		{"notebooks", "name_enc", `ALTER TABLE notebooks ADD COLUMN name_enc BLOB`},
+		{"smart_views", "name_enc", `ALTER TABLE smart_views ADD COLUMN name_enc BLOB`},
+		{"smart_views", "filter_enc", `ALTER TABLE smart_views ADD COLUMN filter_enc BLOB`},
+		{"attachments", "original_name_enc", `ALTER TABLE attachments ADD COLUMN original_name_enc BLOB`},
 	} {
 		if err := d.ensureColumn(migration.table, migration.name, migration.statement); err != nil {
 			return err
@@ -564,12 +569,30 @@ func (d *DB) ReorderNotes(ids []string) error {
 }
 
 func (d *DB) CreateTag(tag *Tag) error {
-	_, err := d.db.Exec(`INSERT INTO tags (id, name, color) VALUES (?, ?, ?)`, tag.ID, tag.Name, tag.Color)
+	if taken, err := d.tagNameTaken(tag.Name, ""); err != nil {
+		return err
+	} else if taken {
+		return ErrDuplicateTagName
+	}
+	plain, enc, err := d.sealField(tag.Name, tag.ID)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`INSERT INTO tags (id, name, color, name_enc) VALUES (?, ?, ?, ?)`, tag.ID, plain, tag.Color, enc)
 	return err
 }
 
 func (d *DB) UpdateTag(tag *Tag) error {
-	_, err := d.db.Exec(`UPDATE tags SET name = ?, color = ? WHERE id = ?`, tag.Name, tag.Color, tag.ID)
+	if taken, err := d.tagNameTaken(tag.Name, tag.ID); err != nil {
+		return err
+	} else if taken {
+		return ErrDuplicateTagName
+	}
+	plain, enc, err := d.sealField(tag.Name, tag.ID)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`UPDATE tags SET name = ?, color = ?, name_enc = ? WHERE id = ?`, plain, tag.Color, enc, tag.ID)
 	return err
 }
 
@@ -579,7 +602,7 @@ func (d *DB) DeleteTag(id string) error {
 }
 
 func (d *DB) ListTags() ([]*Tag, error) {
-	rows, err := d.db.Query(`SELECT id, name, color FROM tags ORDER BY name`)
+	rows, err := d.db.Query(`SELECT id, name, color, name_enc FROM tags`)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +611,11 @@ func (d *DB) ListTags() ([]*Tag, error) {
 	var tags []*Tag
 	for rows.Next() {
 		var tag Tag
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Color); err != nil {
+		var enc []byte
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Color, &enc); err != nil {
+			return nil, err
+		}
+		if tag.Name, err = d.openField(tag.Name, enc); err != nil {
 			return nil, err
 		}
 		tags = append(tags, &tag)
@@ -596,6 +623,7 @@ func (d *DB) ListTags() ([]*Tag, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	sortTagsByName(tags)
 	return tags, nil
 }
 
@@ -634,10 +662,9 @@ func (d *DB) DeleteTagWithAssociations(tagID string) error {
 
 func (d *DB) GetNoteTags(noteID string) ([]*Tag, error) {
 	rows, err := d.db.Query(`
-		SELECT t.id, t.name, t.color FROM tags t
+		SELECT t.id, t.name, t.color, t.name_enc FROM tags t
 		INNER JOIN note_tags nt ON t.id = nt.tag_id
 		WHERE nt.note_id = ?
-		ORDER BY t.name
 	`, noteID)
 	if err != nil {
 		return nil, err
@@ -647,7 +674,11 @@ func (d *DB) GetNoteTags(noteID string) ([]*Tag, error) {
 	var tags []*Tag
 	for rows.Next() {
 		var tag Tag
-		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Color); err != nil {
+		var enc []byte
+		if err := rows.Scan(&tag.ID, &tag.Name, &tag.Color, &enc); err != nil {
+			return nil, err
+		}
+		if tag.Name, err = d.openField(tag.Name, enc); err != nil {
 			return nil, err
 		}
 		tags = append(tags, &tag)
@@ -655,6 +686,7 @@ func (d *DB) GetNoteTags(noteID string) ([]*Tag, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	sortTagsByName(tags)
 	return tags, nil
 }
 
@@ -671,10 +703,9 @@ func (d *DB) GetNoteTagsBatch(noteIDs []string) (map[string][]*Tag, error) {
 	}
 
 	query := fmt.Sprintf(`
-		SELECT nt.note_id, t.id, t.name, t.color FROM tags t
+		SELECT nt.note_id, t.id, t.name, t.color, t.name_enc FROM tags t
 		INNER JOIN note_tags nt ON t.id = nt.tag_id
 		WHERE nt.note_id IN (%s)
-		ORDER BY t.name
 	`, strings.Join(placeholders, ","))
 
 	rows, err := d.db.Query(query, args...)
@@ -687,13 +718,20 @@ func (d *DB) GetNoteTagsBatch(noteIDs []string) (map[string][]*Tag, error) {
 	for rows.Next() {
 		var noteID string
 		var tag Tag
-		if err := rows.Scan(&noteID, &tag.ID, &tag.Name, &tag.Color); err != nil {
+		var enc []byte
+		if err := rows.Scan(&noteID, &tag.ID, &tag.Name, &tag.Color, &enc); err != nil {
+			return nil, err
+		}
+		if tag.Name, err = d.openField(tag.Name, enc); err != nil {
 			return nil, err
 		}
 		result[noteID] = append(result[noteID], &tag)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	for _, list := range result {
+		sortTagsByName(list)
 	}
 	return result, nil
 }
@@ -791,8 +829,12 @@ func (d *DB) DeleteSingleHistory(historyID string) error {
 }
 
 func (d *DB) CreateNotebook(notebook *Notebook) error {
-	_, err := d.db.Exec(`INSERT INTO notebooks (id, name, icon, sort_order, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		notebook.ID, notebook.Name, notebook.Icon, notebook.SortOrder, notebook.Pinned, notebook.CreatedAt, notebook.UpdatedAt)
+	plain, enc, err := d.sealField(notebook.Name, "")
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`INSERT INTO notebooks (id, name, icon, sort_order, pinned, created_at, updated_at, name_enc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		notebook.ID, plain, notebook.Icon, notebook.SortOrder, notebook.Pinned, notebook.CreatedAt, notebook.UpdatedAt, enc)
 	return err
 }
 
@@ -800,9 +842,13 @@ func (d *DB) GetNotebook(id string) (*Notebook, error) {
 	var notebook Notebook
 	var createdAtAny any
 	var updatedAtAny any
-	err := d.db.QueryRow(`SELECT id, name, icon, sort_order, COALESCE(pinned, 0), COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP) FROM notebooks WHERE id = ?`, id).
-		Scan(&notebook.ID, &notebook.Name, &notebook.Icon, &notebook.SortOrder, &notebook.Pinned, &createdAtAny, &updatedAtAny)
+	var nameEnc []byte
+	err := d.db.QueryRow(`SELECT id, name, icon, sort_order, COALESCE(pinned, 0), COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP), name_enc FROM notebooks WHERE id = ?`, id).
+		Scan(&notebook.ID, &notebook.Name, &notebook.Icon, &notebook.SortOrder, &notebook.Pinned, &createdAtAny, &updatedAtAny, &nameEnc)
 	if err != nil {
+		return nil, err
+	}
+	if notebook.Name, err = d.openField(notebook.Name, nameEnc); err != nil {
 		return nil, err
 	}
 	if notebook.CreatedAt, err = parseSQLiteTime(createdAtAny); err != nil {
@@ -815,8 +861,12 @@ func (d *DB) GetNotebook(id string) (*Notebook, error) {
 }
 
 func (d *DB) UpdateNotebook(notebook *Notebook) error {
-	_, err := d.db.Exec(`UPDATE notebooks SET name = ?, icon = ?, sort_order = ?, pinned = ?, updated_at = ? WHERE id = ?`,
-		notebook.Name, notebook.Icon, notebook.SortOrder, notebook.Pinned, notebook.UpdatedAt, notebook.ID)
+	plain, enc, err := d.sealField(notebook.Name, "")
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`UPDATE notebooks SET name = ?, icon = ?, sort_order = ?, pinned = ?, updated_at = ?, name_enc = ? WHERE id = ?`,
+		plain, notebook.Icon, notebook.SortOrder, notebook.Pinned, notebook.UpdatedAt, enc, notebook.ID)
 	return err
 }
 
@@ -826,7 +876,7 @@ func (d *DB) DeleteNotebook(id string) error {
 }
 
 func (d *DB) ListNotebooks() ([]*Notebook, error) {
-	rows, err := d.db.Query(`SELECT id, name, icon, sort_order, COALESCE(pinned, 0), COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP) FROM notebooks ORDER BY pinned DESC, sort_order, name`)
+	rows, err := d.db.Query(`SELECT id, name, icon, sort_order, COALESCE(pinned, 0), COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP), name_enc FROM notebooks ORDER BY pinned DESC, sort_order, created_at`)
 	if err != nil {
 		return nil, err
 	}
@@ -837,7 +887,11 @@ func (d *DB) ListNotebooks() ([]*Notebook, error) {
 		var n Notebook
 		var createdAtAny any
 		var updatedAtAny any
-		if err := rows.Scan(&n.ID, &n.Name, &n.Icon, &n.SortOrder, &n.Pinned, &createdAtAny, &updatedAtAny); err != nil {
+		var nameEnc []byte
+		if err := rows.Scan(&n.ID, &n.Name, &n.Icon, &n.SortOrder, &n.Pinned, &createdAtAny, &updatedAtAny, &nameEnc); err != nil {
+			return nil, err
+		}
+		if n.Name, err = d.openField(n.Name, nameEnc); err != nil {
 			return nil, err
 		}
 		if n.CreatedAt, err = parseSQLiteTime(createdAtAny); err != nil {
@@ -911,25 +965,54 @@ func (d *DB) SetNotesNotebook(noteIDs []string, notebookID *string) error {
 	return tx.Commit()
 }
 
+func (d *DB) sealSmartView(sv *SmartView) (name string, nameEnc []byte, filter string, filterEnc []byte, err error) {
+	if name, nameEnc, err = d.sealField(sv.Name, ""); err != nil {
+		return
+	}
+	filter, filterEnc, err = d.sealField(sv.FilterJSON, "{}")
+	return
+}
+
+func (d *DB) openSmartView(sv *SmartView, nameEnc, filterEnc []byte) error {
+	var err error
+	if sv.Name, err = d.openField(sv.Name, nameEnc); err != nil {
+		return err
+	}
+	sv.FilterJSON, err = d.openField(sv.FilterJSON, filterEnc)
+	return err
+}
+
 func (d *DB) CreateSmartView(sv *SmartView) error {
-	_, err := d.db.Exec(`INSERT INTO smart_views (id, name, icon, filter_json, sort_order) VALUES (?, ?, ?, ?, ?)`,
-		sv.ID, sv.Name, sv.Icon, sv.FilterJSON, sv.SortOrder)
+	name, nameEnc, filter, filterEnc, err := d.sealSmartView(sv)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`INSERT INTO smart_views (id, name, icon, filter_json, sort_order, name_enc, filter_enc) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		sv.ID, name, sv.Icon, filter, sv.SortOrder, nameEnc, filterEnc)
 	return err
 }
 
 func (d *DB) GetSmartView(id string) (*SmartView, error) {
 	var sv SmartView
-	err := d.db.QueryRow(`SELECT id, name, icon, filter_json, sort_order FROM smart_views WHERE id = ?`, id).
-		Scan(&sv.ID, &sv.Name, &sv.Icon, &sv.FilterJSON, &sv.SortOrder)
+	var nameEnc, filterEnc []byte
+	err := d.db.QueryRow(`SELECT id, name, icon, filter_json, sort_order, name_enc, filter_enc FROM smart_views WHERE id = ?`, id).
+		Scan(&sv.ID, &sv.Name, &sv.Icon, &sv.FilterJSON, &sv.SortOrder, &nameEnc, &filterEnc)
 	if err != nil {
+		return nil, err
+	}
+	if err := d.openSmartView(&sv, nameEnc, filterEnc); err != nil {
 		return nil, err
 	}
 	return &sv, nil
 }
 
 func (d *DB) UpdateSmartView(sv *SmartView) error {
-	_, err := d.db.Exec(`UPDATE smart_views SET name = ?, icon = ?, filter_json = ?, sort_order = ? WHERE id = ?`,
-		sv.Name, sv.Icon, sv.FilterJSON, sv.SortOrder, sv.ID)
+	name, nameEnc, filter, filterEnc, err := d.sealSmartView(sv)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`UPDATE smart_views SET name = ?, icon = ?, filter_json = ?, sort_order = ?, name_enc = ?, filter_enc = ? WHERE id = ?`,
+		name, sv.Icon, filter, sv.SortOrder, nameEnc, filterEnc, sv.ID)
 	return err
 }
 
@@ -939,7 +1022,7 @@ func (d *DB) DeleteSmartView(id string) error {
 }
 
 func (d *DB) ListSmartViews() ([]*SmartView, error) {
-	rows, err := d.db.Query(`SELECT id, name, icon, filter_json, sort_order FROM smart_views ORDER BY sort_order, name`)
+	rows, err := d.db.Query(`SELECT id, name, icon, filter_json, sort_order, name_enc, filter_enc FROM smart_views ORDER BY sort_order, rowid`)
 	if err != nil {
 		return nil, err
 	}
@@ -948,7 +1031,11 @@ func (d *DB) ListSmartViews() ([]*SmartView, error) {
 	var views []*SmartView
 	for rows.Next() {
 		var sv SmartView
-		if err := rows.Scan(&sv.ID, &sv.Name, &sv.Icon, &sv.FilterJSON, &sv.SortOrder); err != nil {
+		var nameEnc, filterEnc []byte
+		if err := rows.Scan(&sv.ID, &sv.Name, &sv.Icon, &sv.FilterJSON, &sv.SortOrder, &nameEnc, &filterEnc); err != nil {
+			return nil, err
+		}
+		if err := d.openSmartView(&sv, nameEnc, filterEnc); err != nil {
 			return nil, err
 		}
 		views = append(views, &sv)

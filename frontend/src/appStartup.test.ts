@@ -89,7 +89,7 @@ test('App shows onboarding before setup password on first run', () => {
   assert.equal(source.indexOf('if (isFirstRun && showOnboarding)') < source.indexOf('if (isFirstRun)'), true);
 });
 
-test('Onboarding introduces core features and links to legal pages', () => {
+test('Onboarding introduces core features and links to the project page', () => {
   assert.equal(/app-icon\.png/.test(onboardingSource), true);
   assert.equal(/version/.test(onboardingSource), true);
   assert.equal(/onboardingSlides/.test(onboardingSource), true);
@@ -97,10 +97,8 @@ test('Onboarding introduces core features and links to legal pages', () => {
   assert.equal(/ChevronLeft/.test(onboardingSource), true);
   assert.equal(/ChevronRight/.test(onboardingSource), true);
   assert.equal(/onStart/.test(onboardingSource), true);
-  assert.equal(/BrowserOpenURL\('https:\/\/locknote\.app'\)/.test(onboardingSource), true);
-  assert.equal(/BrowserOpenURL\('https:\/\/locknote\.app\/privacy'\)/.test(onboardingSource), true);
-  assert.equal(/BrowserOpenURL\('https:\/\/locknote\.app\/terms'\)/.test(onboardingSource), true);
-  assert.equal(/BrowserOpenURL\('https:\/\/locknote\.app\/disclaimer'\)/.test(onboardingSource), true);
+  assert.equal(/BrowserOpenURL\('https:\/\/github\.com\/codeyu\/locknote'\)/.test(onboardingSource), true);
+  assert.equal(/locknote\.app/.test(onboardingSource), false);
 });
 
 test('Onboarding centers the larger brand header and only frames the slide panel', () => {

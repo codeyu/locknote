@@ -1,6 +1,4 @@
-//  https://github.com/JackyZhang8/locknote
-//  一个简单、可靠、离线优先的桌面加密笔记软件。
-//  A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 
 package main
 
@@ -8,9 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"locknote/internal/core"
-	"locknote/internal/version"
 	"log"
+	"naishomemo/internal/core"
+	"naishomemo/internal/version"
 	"os"
 	"path/filepath"
 	"sync"
@@ -35,6 +33,10 @@ type App struct {
 	lastMinimized     bool
 	allowClose        atomic.Bool
 	closeRequestStart atomic.Bool
+
+	// 系统通过双击或“打开方式”交给本程序、尚未展示的 .naisho 文件
+	pendingMu     sync.Mutex
+	pendingSealed []string
 }
 
 func NewApp() *App {
@@ -42,19 +44,16 @@ func NewApp() *App {
 	if err != nil {
 		homeDir = "."
 	}
-	dataDir := filepath.Join(homeDir, ".locknote")
-	legacyDir := filepath.Join(homeDir, ".notebase")
-	if _, err := os.Stat(legacyDir); err == nil {
-		if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-			if err := os.Rename(legacyDir, dataDir); err != nil {
-				dataDir = legacyDir
-			}
-		}
-	}
-	return &App{
+	dataDir := filepath.Join(homeDir, ".naishomemo")
+	app := &App{
 		dataDir:   dataDir,
 		coreReady: make(chan struct{}),
 	}
+	// Windows / Linux 双击文件时，文件路径作为命令行参数传入
+	if len(os.Args) > 1 {
+		app.queueSealedFiles(os.Args[1:])
+	}
+	return app
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -98,7 +97,7 @@ func (a *App) startCoreInitialization(ctx context.Context) {
 			if ctx != nil {
 				runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
 					Type:    runtime.ErrorDialog,
-					Title:   "LockNote",
+					Title:   "NaishoMemo",
 					Message: fmt.Sprintf("Failed to initialize: %v", err),
 				})
 			}

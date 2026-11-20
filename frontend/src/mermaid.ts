@@ -48,7 +48,7 @@ export async function renderMermaid(source: string): Promise<string> {
   try {
     // Mermaid serializes its render queue; unique IDs also isolate markers
     // between different diagrams and cancelled StrictMode render attempts.
-    const { svg } = await mermaid.render(`locknote-mermaid-${++renderSequence}`, source, container);
+    const { svg } = await mermaid.render(`naishomemo-mermaid-${++renderSequence}`, source, container);
     return svg;
   } finally {
     container.remove();

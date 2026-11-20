@@ -2,8 +2,8 @@ package todos
 
 import (
 	"errors"
-	"locknote/internal/crypto"
-	"locknote/internal/database"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/database"
 	"strings"
 	"sync"
 	"time"

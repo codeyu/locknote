@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package notes
 
 import (
@@ -10,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"locknote/internal/crypto"
-	"locknote/internal/database"
-	"locknote/internal/fsutil"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/database"
+	"naishomemo/internal/fsutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -912,7 +910,7 @@ func (s *Service) ImportFromBackup(backupPath, displayKey string) (int, error) {
 		return 0, errors.New("无效的密钥格式")
 	}
 
-	tempDir, err := os.MkdirTemp("", "locknote-import-*")
+	tempDir, err := os.MkdirTemp("", "naishomemo-import-*")
 	if err != nil {
 		return 0, err
 	}

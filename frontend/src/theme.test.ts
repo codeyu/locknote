@@ -30,7 +30,7 @@ test('applyTheme writes data-theme and persists the selected theme', () => {
   applyTheme('lobster', doc, storage);
 
   assert.equal(dataset.theme, 'lobster');
-  assert.equal(stored['locknote-theme'], 'lobster');
+  assert.equal(stored['naishomemo-theme'], 'lobster');
 });
 
 test('themeOptions exposes the three supported themes in order', () => {

@@ -43,7 +43,7 @@ export function OnboardingScreen({ onStart }: OnboardingScreenProps) {
             className="h-20 w-20 rounded-[22px]"
           />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">LockNote</h1>
+            <h1 className="text-3xl font-bold text-gray-900">NaishoMemo</h1>
             <p className="mt-1 text-sm text-gray-400">{version}</p>
           </div>
         </header>
@@ -116,31 +116,10 @@ export function OnboardingScreen({ onStart }: OnboardingScreenProps) {
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-gray-100 pt-4 text-sm">
             <button
               type="button"
-              onClick={() => BrowserOpenURL('https://locknote.app')}
+              onClick={() => BrowserOpenURL('https://github.com/codeyu/locknote')}
               className="text-gray-500 hover:text-accent hover:underline"
             >
               {t.settings.website}
-            </button>
-            <button
-              type="button"
-              onClick={() => BrowserOpenURL('https://locknote.app/privacy')}
-              className="text-gray-500 hover:text-accent hover:underline"
-            >
-              {t.settings.privacy}
-            </button>
-            <button
-              type="button"
-              onClick={() => BrowserOpenURL('https://locknote.app/terms')}
-              className="text-gray-500 hover:text-accent hover:underline"
-            >
-              {t.settings.terms}
-            </button>
-            <button
-              type="button"
-              onClick={() => BrowserOpenURL('https://locknote.app/disclaimer')}
-              className="text-gray-500 hover:text-accent hover:underline"
-            >
-              {t.settings.disclaimer}
             </button>
           </div>
         </footer>

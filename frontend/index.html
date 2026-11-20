@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LockNote.app</title>
+    <title>NaishoMemo</title>
     <style>
       html, body, #root {
         height: 100%;
@@ -114,7 +114,7 @@
       // 在样式生效前同步套用用户上次选择的主题，避免启动瞬间闪一下默认色。
       (function () {
         try {
-          var theme = window.localStorage.getItem('locknote-theme');
+          var theme = window.localStorage.getItem('naishomemo-theme');
           if (theme === 'apple' || theme === 'lobster' || theme === 'sunset') {
             document.documentElement.setAttribute('data-theme', theme);
           }
@@ -138,7 +138,7 @@
           />
           <rect x="18.6" y="29.4" width="26.8" height="18.2" rx="4.2" fill="#22c55e" />
         </svg>
-        <h1 class="boot-title">LockNote</h1>
+        <h1 class="boot-title">NaishoMemo</h1>
         <p class="boot-subtitle">正在启动应用核心...</p>
         <div class="boot-track"><div class="boot-bar"></div></div>
       </div>

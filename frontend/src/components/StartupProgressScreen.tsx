@@ -19,7 +19,7 @@ export function StartupProgressScreen({ message, progress }: StartupProgressScre
             className="h-16 w-16 rounded-[18px]"
           />
         </div>
-        <h1 className="text-center text-2xl font-bold text-gray-900">LockNote</h1>
+        <h1 className="text-center text-2xl font-bold text-gray-900">NaishoMemo</h1>
         <p className="mt-2 text-center text-sm text-gray-500">{message}</p>
 
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-primary-50">

@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package backup
 
 import (
@@ -8,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"locknote/internal/crypto"
-	"locknote/internal/fsutil"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/fsutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -28,17 +26,18 @@ var (
 	restoreSnapshotKeep = 3
 
 	sensitiveFiles = map[string]bool{
-		"locknote.db":         true,
-		"locknote.db-journal": true,
-		"locknote.db-wal":     true,
-		"locknote.db-shm":     true,
-		"notebase.db":         true,
-		"notebase.db-journal": true,
-		"notebase.db-wal":     true,
-		"notebase.db-shm":     true,
-		"data_key_verifier":   true,
+		"naishomemo.db":         true,
+		"naishomemo.db-journal": true,
+		"naishomemo.db-wal":     true,
+		"naishomemo.db-shm":     true,
+		"data_key_verifier":     true,
 	}
 )
+
+// DatabaseSnapshotEntry 是备份 zip 中数据库快照的路径。
+// 快照包含待办、标签、笔记本、智能视图、附件信息和笔记元数据（敏感字段本身已加密）。
+// 恢复时它不会被直接复制到数据目录，而是交给调用方按表导入。
+const DatabaseSnapshotEntry = "database/naishomemo.db"
 
 type Service struct {
 	dataDir string
@@ -50,10 +49,20 @@ func NewService(dataDir string) *Service {
 
 func skippedBackupPath(name string) bool {
 	name = filepath.ToSlash(filepath.Clean(name))
+	if name == DatabaseSnapshotEntry {
+		// 数据库快照允许出现在 zip 里并被解压，但不会作为普通文件复制回数据目录
+		return false
+	}
 	if sensitiveFiles[filepath.Base(name)] {
 		return true
 	}
 	return name == "restore-snapshots" || strings.HasPrefix(name, "restore-snapshots/")
+}
+
+// isDatabaseSnapshotPath 判断解压出的文件是否属于数据库快照目录（恢复时不复制到数据目录）。
+func isDatabaseSnapshotPath(name string) bool {
+	name = filepath.ToSlash(filepath.Clean(name))
+	return name == "database" || strings.HasPrefix(name, "database/")
 }
 
 func safeZipDestination(root, name string) (string, string, bool) {
@@ -76,7 +85,7 @@ func safeZipDestination(root, name string) (string, string, bool) {
 }
 
 func (s *Service) ExtractBackupToTemp(inputPath string) (string, error) {
-	tempDir, err := os.MkdirTemp("", "locknote-import-*")
+	tempDir, err := os.MkdirTemp("", "naishomemo-import-*")
 	if err != nil {
 		return "", err
 	}
@@ -201,15 +210,36 @@ func (s *Service) pruneRestoreSnapshots(keep int) {
 	}
 }
 
+// CreateBackup 只备份加密文件（笔记、历史、附件），不含数据库。
 func (s *Service) CreateBackup(outputPath string) error {
+	return s.CreateBackupWithDatabase(outputPath, "")
+}
+
+// CreateBackupWithDatabase 备份加密文件，并把 dbSnapshotPath（数据库快照，可为空）
+// 以 DatabaseSnapshotEntry 的名字放进 zip。
+func (s *Service) CreateBackupWithDatabase(outputPath, dbSnapshotPath string) (err error) {
 	zipFile, err := os.Create(outputPath)
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
+	defer func() {
+		if closeErr := zipFile.Close(); err == nil {
+			err = closeErr
+		}
+	}()
 
 	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
+	defer func() {
+		if closeErr := zipWriter.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+
+	if dbSnapshotPath != "" {
+		if err := addFileToZip(zipWriter, dbSnapshotPath, DatabaseSnapshotEntry); err != nil {
+			return err
+		}
+	}
 
 	err = filepath.Walk(s.dataDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -226,7 +256,7 @@ func (s *Service) CreateBackup(outputPath string) error {
 			}
 			return nil
 		}
-		if skippedBackupPath(relPath) {
+		if skippedBackupPath(relPath) || isDatabaseSnapshotPath(relPath) {
 			return nil
 		}
 
@@ -259,6 +289,12 @@ func (s *Service) CreateBackup(outputPath string) error {
 }
 
 func (s *Service) RestoreBackup(inputPath string, cryptoService *crypto.Service, key []byte) error {
+	return s.RestoreBackupWithDatabase(inputPath, cryptoService, key, nil)
+}
+
+// RestoreBackupWithDatabase 恢复加密文件；如果备份里有数据库快照且 applyDatabase 不为空，
+// 在文件恢复完成后调用 applyDatabase(快照路径)。它返回错误时，已恢复的文件会被回滚。
+func (s *Service) RestoreBackupWithDatabase(inputPath string, cryptoService *crypto.Service, key []byte, applyDatabase func(snapshotPath string) error) error {
 	if key == nil {
 		return errors.New("请先解锁")
 	}
@@ -344,7 +380,7 @@ func (s *Service) RestoreBackup(inputPath string, cryptoService *crypto.Service,
 		if err != nil {
 			return err
 		}
-		if skippedBackupPath(relPath) {
+		if skippedBackupPath(relPath) || isDatabaseSnapshotPath(relPath) {
 			return nil
 		}
 		destination := filepath.Join(s.dataDir, relPath)
@@ -396,6 +432,41 @@ func (s *Service) RestoreBackup(inputPath string, cryptoService *crypto.Service,
 	if err != nil {
 		return rollback(err)
 	}
+	if applyDatabase != nil {
+		snapshotPath := filepath.Join(tempDir, filepath.FromSlash(DatabaseSnapshotEntry))
+		if info, statErr := os.Stat(snapshotPath); statErr == nil && info.Mode().IsRegular() {
+			if err := applyDatabase(snapshotPath); err != nil {
+				return rollback(fmt.Errorf("恢复数据库失败: %w", err))
+			}
+		}
+	}
 	s.pruneRestoreSnapshots(restoreSnapshotKeep)
 	return nil
+}
+
+func addFileToZip(zipWriter *zip.Writer, sourcePath, entryName string) error {
+	info, err := os.Stat(sourcePath)
+	if err != nil {
+		return err
+	}
+	header, err := zip.FileInfoHeader(info)
+	if err != nil {
+		return err
+	}
+	header.Name = entryName
+	header.Method = zip.Deflate
+	writer, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	file, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	_, copyErr := io.Copy(writer, file)
+	closeErr := file.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	return closeErr
 }

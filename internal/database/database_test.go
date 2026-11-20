@@ -6,7 +6,7 @@ import (
 )
 
 func TestMigrateIsIdempotentAndSetsSchemaVersion(t *testing.T) {
-	db, err := New(filepath.Join(t.TempDir(), "locknote.db"))
+	db, err := New(filepath.Join(t.TempDir(), "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -28,7 +28,7 @@ func TestMigrateIsIdempotentAndSetsSchemaVersion(t *testing.T) {
 }
 
 func TestMasterPasswordInsertUpdateAndClosedDBErrors(t *testing.T) {
-	db, err := New(filepath.Join(t.TempDir(), "locknote.db"))
+	db, err := New(filepath.Join(t.TempDir(), "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}

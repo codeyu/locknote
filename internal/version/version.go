@@ -6,8 +6,8 @@
 package version
 
 // Version 是当前应用版本号（不含 v 前缀）。
-// 构建时可用 -ldflags "-X locknote/internal/version.Version=x.y.z" 覆盖。
-var Version = "1.1.0"
+// 构建时可用 -ldflags "-X naishomemo/internal/version.Version=x.y.z" 覆盖。
+var Version = "0.1.0"
 
 // Display 返回带 v 前缀的版本号，用于界面展示。
 func Display() string {

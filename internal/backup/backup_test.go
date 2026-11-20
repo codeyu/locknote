@@ -3,11 +3,12 @@ package backup
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"locknote/internal/crypto"
+	"naishomemo/internal/crypto"
 )
 
 type zipTestEntry struct {
@@ -41,7 +42,7 @@ func writeTestZip(t *testing.T, path string, entries []zipTestEntry) {
 
 func TestCreateBackupExcludesSensitiveFilesAndRestoreSnapshots(t *testing.T) {
 	dataDir := t.TempDir()
-	for _, name := range []string{"locknote.db", "data_key_verifier", "notes/note.enc", "restore-snapshots/123/notes/old.enc"} {
+	for _, name := range []string{"naishomemo.db", "data_key_verifier", "notes/note.enc", "restore-snapshots/123/notes/old.enc"} {
 		path := filepath.Join(dataDir, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 			t.Fatal(err)
@@ -159,7 +160,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 	}
 	dataDir := t.TempDir()
 	originalDB := []byte("existing db")
-	if err := os.WriteFile(filepath.Join(dataDir, "locknote.db"), originalDB, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dataDir, "naishomemo.db"), originalDB, 0600); err != nil {
 		t.Fatal(err)
 	}
 	originalVerifier := []byte("existing verifier")
@@ -171,7 +172,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 	backupPath := filepath.Join(t.TempDir(), "backup.zip")
 	writeTestZip(t, backupPath, []zipTestEntry{
 		{name: "notes/note.enc", data: ciphertext},
-		{name: "locknote.db", data: []byte("malicious db")},
+		{name: "naishomemo.db", data: []byte("malicious db")},
 		{name: "data_key_verifier", data: []byte("malicious verifier")},
 		{name: "../evil", data: []byte("outside")},
 	})
@@ -180,7 +181,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, want := range map[string][]byte{
-		"locknote.db":       originalDB,
+		"naishomemo.db":     originalDB,
 		"data_key_verifier": originalVerifier,
 	} {
 		got, err := os.ReadFile(filepath.Join(dataDir, name))
@@ -257,5 +258,77 @@ func TestPruneRestoreSnapshotsNoopWhenUnderLimit(t *testing.T) {
 
 	if _, err := os.Stat(filepath.Join(root, "100")); err != nil {
 		t.Fatalf("snapshot should survive: %v", err)
+	}
+}
+
+func TestCreateBackupWithDatabaseAddsSnapshotEntry(t *testing.T) {
+	dataDir := t.TempDir()
+	notePath := filepath.Join(dataDir, "notes", "note.enc")
+	if err := os.MkdirAll(filepath.Dir(notePath), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(notePath, []byte("file"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := filepath.Join(t.TempDir(), "snap.db")
+	if err := os.WriteFile(snapshot, []byte("sqlite"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	backupPath := filepath.Join(t.TempDir(), "backup.zip")
+	if err := NewService(dataDir).CreateBackupWithDatabase(backupPath, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	reader, err := zip.OpenReader(backupPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	found := map[string]bool{}
+	for _, file := range reader.File {
+		found[file.Name] = true
+	}
+	if !found[DatabaseSnapshotEntry] || !found["notes/note.enc"] || len(found) != 2 {
+		t.Fatalf("entries = %v", found)
+	}
+}
+
+func TestRestoreBackupWithDatabaseAppliesSnapshotAndRollsBackOnError(t *testing.T) {
+	serviceCrypto := crypto.NewService()
+	key := serviceCrypto.DeriveDataKey("same-vault-key")
+	ciphertext, err := serviceCrypto.Encrypt(key, []byte("restored note"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	backupPath := filepath.Join(t.TempDir(), "backup.zip")
+	writeTestZip(t, backupPath, []zipTestEntry{
+		{name: "notes/aa/note.enc", data: ciphertext},
+		{name: DatabaseSnapshotEntry, data: []byte("snapshot-bytes")},
+	})
+
+	dataDir := t.TempDir()
+	var applied []byte
+	err = NewService(dataDir).RestoreBackupWithDatabase(backupPath, serviceCrypto, key, func(path string) error {
+		applied, _ = os.ReadFile(path)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(applied) != "snapshot-bytes" {
+		t.Fatalf("snapshot passed to callback = %q", applied)
+	}
+	if _, err := os.Stat(filepath.Join(dataDir, "database")); !os.IsNotExist(err) {
+		t.Fatal("snapshot must not be copied into the data directory")
+	}
+
+	otherDir := t.TempDir()
+	err = NewService(otherDir).RestoreBackupWithDatabase(backupPath, serviceCrypto, key, func(string) error {
+		return errors.New("boom")
+	})
+	if err == nil {
+		t.Fatal("expected callback error")
+	}
+	if _, statErr := os.Stat(filepath.Join(otherDir, "notes", "aa", "note.enc")); !os.IsNotExist(statErr) {
+		t.Fatal("restored files must be rolled back when the database step fails")
 	}
 }

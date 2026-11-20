@@ -2,7 +2,7 @@ package mobile
 
 import (
 	"fmt"
-	"locknote/internal/core"
+	"naishomemo/internal/core"
 	"os"
 	"regexp"
 	"strings"

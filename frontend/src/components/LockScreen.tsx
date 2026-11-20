@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Eye, EyeOff, AlertCircle, HelpCircle, Key } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Eye, EyeOff, AlertCircle, HelpCircle, Key, Hash } from 'lucide-react';
 import { useStore } from '../store';
-import { useI18n } from '../i18n';
+import { formatMessage, useI18n } from '../i18n';
 import appIcon from '../assets/app-icon.png';
 import * as App from '../../wailsjs/go/main/App';
+import { MIN_PASSWORD_LENGTH } from '../passphrase';
+import { MAX_PIN_LENGTH, classifyPinError, isValidPIN, sanitizePINInput } from '../pinUnlock';
 
-type Mode = 'unlock' | 'forgot' | 'reset';
+type Mode = 'pin' | 'unlock' | 'forgot' | 'reset';
 
 export function LockScreen() {
   const { setUnlocked } = useStore();
@@ -22,6 +24,63 @@ export function LockScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newHint, setNewHint] = useState('');
+  const [pin, setPin] = useState('');
+  const [pinAvailable, setPinAvailable] = useState(false);
+  const [pinChecked, setPinChecked] = useState(false);
+
+  // 本次运行中已用主密码解锁过且设置了 PIN 时，锁屏默认使用 PIN
+  useEffect(() => {
+    let cancelled = false;
+    App.CanUnlockWithPIN()
+      .then((available) => {
+        if (cancelled) return;
+        setPinAvailable(available);
+        if (available) setMode('pin');
+      })
+      .catch(() => {
+        if (!cancelled) setPinAvailable(false);
+      })
+      .finally(() => {
+        if (!cancelled) setPinChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const switchToPassword = (message = '') => {
+    setPin('');
+    setMode('unlock');
+    setError(message);
+  };
+
+  const handlePinUnlock = async () => {
+    setError('');
+    if (!isValidPIN(pin)) {
+      setError(t.pin.invalid);
+      return;
+    }
+    setLoading(true);
+    try {
+      const success = await App.UnlockWithPIN(pin);
+      if (success) {
+        setUnlocked(true);
+      }
+    } catch (err) {
+      const result = classifyPinError(err);
+      if (result.kind === 'wrong') {
+        setError(formatMessage(t.pin.wrong, { count: result.remaining }));
+      } else if (result.kind === 'usePassword') {
+        setPinAvailable(false);
+        switchToPassword(t.pin.tooMany);
+      } else {
+        setError(`${t.auth.unlockFailed}：${result.message}`);
+      }
+    } finally {
+      setPin('');
+      setLoading(false);
+    }
+  };
 
   const handleUnlock = async () => {
     setError('');
@@ -55,7 +114,7 @@ export function LockScreen() {
   const handleResetPassword = async () => {
     setError('');
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       setError(t.settings.passwordMinLength);
       return;
     }
@@ -98,15 +157,61 @@ export function LockScreen() {
           className="mb-2 text-center text-[28px] font-bold leading-tight text-gray-900"
           style={{ fontFamily: "'SF Pro Rounded', 'SF Pro Display', 'Inter', system-ui, sans-serif" }}
         >
-          LockNote
+          NaishoMemo
         </h1>
         <p className="text-center text-gray-500 mb-6">
-          {mode === 'unlock' && t.auth.enterPassword}
-          {mode === 'forgot' && t.auth.forgotPassword}
-          {mode === 'reset' && t.auth.resetPassword}
+          {pinChecked && mode === 'pin' && t.pin.unlockTitle}
+          {pinChecked && mode === 'unlock' && t.auth.enterPassword}
+          {pinChecked && mode === 'forgot' && t.auth.forgotPassword}
+          {pinChecked && mode === 'reset' && t.auth.resetPassword}
         </p>
 
-        {mode === 'unlock' && (
+        {pinChecked && mode === 'pin' && (
+          <div className="space-y-4">
+            <input
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={MAX_PIN_LENGTH}
+              value={pin}
+              onChange={(e) => setPin(sanitizePINInput(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && pin) void handlePinUnlock();
+              }}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg text-center text-xl font-mono tracking-[0.5em] placeholder:text-base placeholder:tracking-normal placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              placeholder={t.pin.placeholder}
+              aria-label={t.pin.placeholder}
+              autoFocus
+            />
+
+            {error && (
+              <div className="flex items-center gap-2 text-red-500 text-sm">
+                <AlertCircle className="w-4 h-4" />
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={() => void handlePinUnlock()}
+              disabled={loading || !pin}
+              className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? t.common.loading : t.auth.unlock}
+            </button>
+
+            <div className="flex justify-center text-sm">
+              <button
+                onClick={() => switchToPassword()}
+                className="text-gray-500 hover:text-accent flex items-center gap-1"
+              >
+                <Key className="w-4 h-4" />
+                {t.pin.usePassword}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {pinChecked && mode === 'unlock' && (
           <div className="space-y-4">
             <div>
               <div className="relative">
@@ -158,6 +263,18 @@ export function LockScreen() {
                 <HelpCircle className="w-4 h-4" />
                 {t.auth.viewHint}
               </button>
+              {pinAvailable && (
+                <button
+                  onClick={() => {
+                    setError('');
+                    setMode('pin');
+                  }}
+                  className="text-gray-500 hover:text-accent flex items-center gap-1"
+                >
+                  <Hash className="w-4 h-4" />
+                  {t.pin.usePin}
+                </button>
+              )}
               <button
                 onClick={() => setMode('forgot')}
                 className="text-gray-500 hover:text-accent flex items-center gap-1"
@@ -169,7 +286,7 @@ export function LockScreen() {
           </div>
         )}
 
-        {mode === 'forgot' && (
+        {pinChecked && mode === 'forgot' && (
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-700">
@@ -194,7 +311,7 @@ export function LockScreen() {
           </div>
         )}
 
-        {mode === 'reset' && (
+        {pinChecked && mode === 'reset' && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t.auth.dataKeyLabel}</label>

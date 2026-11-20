@@ -18,7 +18,7 @@ func newTestCore(t *testing.T) *Core {
 
 func TestSetupPasswordCannotOverwriteExistingVault(t *testing.T) {
 	c := newTestCore(t)
-	result, err := c.SetupPassword("original-pass", "", "ABCDEFGHJKMNPQRS")
+	result, err := c.SetupPassword("original-pass", "", "K7MQ2X9P4R3WHT6N")
 	if err != nil {
 		t.Fatalf("setup password: %v", err)
 	}
@@ -26,7 +26,7 @@ func TestSetupPasswordCannotOverwriteExistingVault(t *testing.T) {
 	if err != nil || firstRun {
 		t.Fatalf("IsFirstRun() = %v, %v; want false, nil", firstRun, err)
 	}
-	if _, err := c.SetupPassword("replacement-pass", "", "23456789ABCDEFGH"); err == nil {
+	if _, err := c.SetupPassword("replacement-pass", "", "W4R8N2QX7K9M3TPZ"); err == nil {
 		t.Fatal("expected second setup to be rejected")
 	}
 	c.Lock()
@@ -58,7 +58,7 @@ func TestSetupPasswordVerifierWriteFailureLeavesVaultUninitialized(t *testing.T)
 	if err := os.Mkdir(c.dataKeyVerifierFilePath(), 0700); err != nil {
 		t.Fatalf("create verifier directory: %v", err)
 	}
-	if _, err := c.SetupPassword("valid-pass", "", "ABCDEFGHJKMNPQRS"); err == nil {
+	if _, err := c.SetupPassword("valid-pass", "", "K7MQ2X9P4R3WHT6N"); err == nil {
 		t.Fatal("expected verifier write failure")
 	}
 	firstRun, err := c.IsFirstRun()
@@ -69,7 +69,7 @@ func TestSetupPasswordVerifierWriteFailureLeavesVaultUninitialized(t *testing.T)
 
 func TestUnlockChangePasswordResetAndLock(t *testing.T) {
 	c := newTestCore(t)
-	setup, err := c.SetupPassword("original-pass", "", "ABCDEFGHJKMNPQRS")
+	setup, err := c.SetupPassword("original-pass", "", "K7MQ2X9P4R3WHT6N")
 	if err != nil {
 		t.Fatalf("setup password: %v", err)
 	}
@@ -107,19 +107,19 @@ func TestSetupPasswordVerifierPathIsInDataDirectory(t *testing.T) {
 
 func TestVerifyDataKeyNormalizesInput(t *testing.T) {
 	c := newTestCore(t)
-	const key = "ABCDEFGHJKMNPQRS"
+	const key = "K7MQ2X9P4R3WHT6N"
 	if _, err := c.SetupPassword("valid-pass", "", key); err != nil {
 		t.Fatalf("setup password: %v", err)
 	}
 
-	for _, variant := range []string{"abcdefghjkmnpqrs", "ABCD-EFGH-JKMN-PQRS", " abcdefgh jkmn pqrs "} {
+	for _, variant := range []string{"k7mq2x9p4r3wht6n", "K7MQ-2X9P-4R3W-HT6N", " k7mq2x9p 4r3w ht6n "} {
 		ok, err := c.VerifyDataKey(variant)
 		if err != nil || !ok {
 			t.Fatalf("VerifyDataKey(%q) = %v, %v; want true, nil", variant, ok, err)
 		}
 	}
 
-	if ok, err := c.VerifyDataKey("ABCDEFGHJKMNPQRT"); err != nil || ok {
+	if ok, err := c.VerifyDataKey("K7MQ2X9P4R3WHT6P"); err != nil || ok {
 		t.Fatalf("wrong key verification = %v, %v; want false, nil", ok, err)
 	}
 }
@@ -128,7 +128,7 @@ func TestVerifyDataKeyNormalizesInput(t *testing.T) {
 // 校验文件由历史派生方式（单次 SHA-256）加密，验证逻辑应仍能识别。
 func TestVerifyDataKeyFallsBackToLegacyDerivation(t *testing.T) {
 	c := newTestCore(t)
-	const key = "ABCDEFGHJKMNPQRS"
+	const key = "K7MQ2X9P4R3WHT6N"
 	if _, err := c.SetupPassword("valid-pass", "", key); err != nil {
 		t.Fatalf("setup password: %v", err)
 	}
@@ -156,5 +156,72 @@ func TestSetupPasswordRejectsShortRecoveryKey(t *testing.T) {
 	firstRun, err := c.IsFirstRun()
 	if err != nil || !firstRun {
 		t.Fatalf("IsFirstRun() = %v, %v; want true, nil", firstRun, err)
+	}
+}
+
+func TestPasswordMinimumLengthIsEight(t *testing.T) {
+	c := newTestCore(t)
+	if _, err := c.SetupPassword("seven77", "", "K7MQ2X9P4R3WHT6N"); err == nil {
+		t.Fatal("expected a 7-character password to be rejected")
+	}
+	if _, err := c.SetupPassword("eight888", "", "K7MQ2X9P4R3WHT6N"); err != nil {
+		t.Fatalf("expected an 8-character password to be accepted: %v", err)
+	}
+	if err := c.ChangePassword("eight888", "short77", ""); err == nil {
+		t.Fatal("expected ChangePassword to reject a 7-character password")
+	}
+	if err := c.ResetPasswordWithDataKey("K7MQ2X9P4R3WHT6N", "short77", ""); err == nil {
+		t.Fatal("expected ResetPasswordWithDataKey to reject a 7-character password")
+	}
+}
+
+func TestSetupRejectsWeakRecoveryKey(t *testing.T) {
+	c := newTestCore(t)
+	for _, weak := range []string{"AAAAAAAAAAAAAAAA", "0123456789ABCDEF", "ABCDABCDABCDABCD"} {
+		if _, err := c.SetupPassword("master-pass", "", weak); err == nil {
+			t.Fatalf("weak recovery key %q should be rejected", weak)
+		}
+	}
+	key, err := c.GenerateDataKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.SetupPassword("master-pass", "", key); err != nil {
+		t.Fatalf("generated key should be accepted: %v", err)
+	}
+}
+
+func TestSystemWakeLocksOnlyWhenEnabled(t *testing.T) {
+	c := newTestCore(t)
+	if _, err := c.SetupPassword("master-pass", "", "K7MQ2X9P4R3WHT6N"); err != nil {
+		t.Fatal(err)
+	}
+	notified := 0
+	c.SetLockCallback(func() { notified++ })
+
+	settings, err := c.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.LockOnSleep = false
+	if err := c.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	c.onSystemWake()
+	if !c.IsUnlocked() || notified != 0 {
+		t.Fatal("must stay unlocked when lock-on-sleep is off")
+	}
+
+	settings.LockOnSleep = true
+	if err := c.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	c.onSystemWake()
+	if c.IsUnlocked() || notified != 1 {
+		t.Fatalf("should lock and notify once (unlocked=%v, notified=%d)", c.IsUnlocked(), notified)
+	}
+	c.onSystemWake()
+	if notified != 1 {
+		t.Fatal("already locked: no second notification")
 	}
 }

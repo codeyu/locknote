@@ -149,7 +149,7 @@ jobs:
 
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
-          NOTARY_ZIP="$RUNNER_TEMP/locknote-notary.zip"
+          NOTARY_ZIP="$RUNNER_TEMP/naishomemo-notary.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$NOTARY_ZIP"
 
           xcrun notarytool submit "$NOTARY_ZIP" \
@@ -214,12 +214,12 @@ jobs:
              - 右键 exe -> 属性 -> “解除锁定(Unblock)” -> 应用
 
           3) PowerShell（可选）：
-             Unblock-File .\LockNote.exe
+             Unblock-File .\NaishoMemo.exe
              或对整个文件夹：
              Get-ChildItem -Recurse | Unblock-File
           '@ | Out-File -Encoding utf8 dist/README-WINDOWS.txt
 
-          Compress-Archive -Path build/bin/*,dist/README-WINDOWS.txt -DestinationPath dist/locknote-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          Compress-Archive -Path build/bin/*,dist/README-WINDOWS.txt -DestinationPath dist/naishomemo-${{ matrix.platform }}-${{ matrix.arch }}.zip
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
@@ -232,18 +232,18 @@ jobs:
             echo "No .app bundle found in build/bin" >&2
             exit 1
           fi
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/locknote-${{ matrix.platform }}-${{ matrix.arch }}.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/naishomemo-${{ matrix.platform }}-${{ matrix.arch }}.zip"
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist
           cd build/bin
-          zip -r ../../dist/locknote-${{ matrix.platform }}-${{ matrix.arch }}.zip .
+          zip -r ../../dist/naishomemo-${{ matrix.platform }}-${{ matrix.arch }}.zip .
 
       - uses: actions/upload-artifact@v4
         with:
-          name: locknote-${{ matrix.platform }}-${{ matrix.arch }}
+          name: naishomemo-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*.zip
 
   release:

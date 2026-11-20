@@ -11,7 +11,7 @@ const locales: Record<Language, Translations> = {
   'en-US': enUS,
 };
 
-const STORAGE_KEY = 'locknote-language';
+const STORAGE_KEY = 'naishomemo-language';
 
 function getInitialLanguage(): Language {
   try {
