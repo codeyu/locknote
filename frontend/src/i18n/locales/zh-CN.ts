@@ -171,8 +171,8 @@ export const zhCN = {
     exportMarkdownItem: '导出 Markdown',
     exportMarkdownItemDesc: '明文 .md 文件，图片一起导出',
     exportSealedItem: '加密导出（.naisho）',
-    exportSealedItemDesc: '只有你的 LockNote 能打开，不含图片',
-    exportSealedImagesOmitted: '注意：笔记里的 {count} 张图片没有包含在加密文件中。',
+    exportSealedItemDesc: '只有你的 LockNote 能打开，图片一起加密',
+    exportSealedImagesOmitted: '注意：有 {count} 张图片已找不到，没有包含在加密文件中。',
     diagram: {
       chart: '图表',
       code: '代码',
@@ -421,6 +421,7 @@ export const zhCN = {
     wrongVaultHint: '这个文件可能来自另一个密码库。输入加密它的密码库的恢复密钥再试。',
     recoveryKeyPlaceholder: '16 位恢复密钥',
     openWithKey: '用恢复密钥打开',
+    imagesTitle: '图片（{count}）',
   },
 
   // 设置

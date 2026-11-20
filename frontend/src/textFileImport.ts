@@ -3,7 +3,7 @@
 import { SEALED_FILE_EXTENSION } from './sealedFile.js';
 
 export const MAX_IMPORT_TEXT_FILE_SIZE = 10 * 1024 * 1024;
-export const MAX_IMPORT_SEALED_FILE_SIZE = 40 * 1024 * 1024;
+export const MAX_IMPORT_SEALED_FILE_SIZE = 200 * 1024 * 1024;
 
 export interface FileLike {
   name: string;

@@ -253,3 +253,50 @@ func TestWriteDocument(t *testing.T) {
 		t.Fatalf("bad key: err = %v", err)
 	}
 }
+
+func TestAttachmentsRoundTrip(t *testing.T) {
+	png := []byte("\x89PNG\r\n\x1a\nfake-image-bytes")
+	doc := Document{
+		Title:   "带图片",
+		Content: "看图 ![a](locknote-attachment://img-1)",
+		Attachments: []Attachment{
+			{ID: "img-1", Name: "a.png", MIMEType: "image/png", Data: png},
+		},
+	}
+	out := filepath.Join(t.TempDir(), "img.naisho")
+	if err := WriteDocument(testKey, doc, out); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(out)
+	if bytes.Contains(raw, []byte("fake-image-bytes")) || bytes.Contains(raw, []byte("a.png")) {
+		t.Fatal("attachment data or name leaked in plaintext")
+	}
+	got, err := OpenFile(testKey, out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Attachments) != 1 || got.Attachments[0].ID != "img-1" || got.Attachments[0].Name != "a.png" ||
+		got.Attachments[0].MIMEType != "image/png" || !bytes.Equal(got.Attachments[0].Data, png) {
+		t.Fatalf("attachments = %+v", got.Attachments)
+	}
+}
+
+func TestVersion1PayloadStillOpens(t *testing.T) {
+	// 手工构造一个 payload 版本 1（没有 attachments 字段）的文件
+	gcm, _ := newGCM(testKey)
+	h := header()
+	nonce := make([]byte, nonceSize)
+	plaintext := []byte(`{"v":1,"title":"旧格式","content":"body","originalName":"x.txt","sealedAt":""}`)
+	data := append(append(append([]byte{}, h...), nonce...), gcm.Seal(nil, nonce, plaintext, h)...)
+	doc, err := Open(testKey, data)
+	if err != nil || doc.Title != "旧格式" || doc.Content != "body" || len(doc.Attachments) != 0 {
+		t.Fatalf("v1 doc = %+v, %v", doc, err)
+	}
+}
+
+func TestAttachmentsSizeLimit(t *testing.T) {
+	doc := Document{Content: "x", Attachments: []Attachment{{ID: "big", MIMEType: "image/png", Data: make([]byte, MaxAttachmentsSize+1)}}}
+	if _, err := Seal(testKey, doc); !errors.Is(err, ErrAttachmentsTooBig) {
+		t.Fatalf("err = %v", err)
+	}
+}

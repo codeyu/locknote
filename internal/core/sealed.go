@@ -2,8 +2,12 @@ package core
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
+	"locknote/internal/attachments"
 	"locknote/internal/notes"
 	"locknote/internal/sealedfile"
 )
@@ -84,6 +88,7 @@ func (c *Core) OpenSealedDataWithRecoveryKey(data []byte, displayKey string) (*s
 }
 
 // ImportSealedDocument 把解密后的文档存为密码库中的一篇新笔记。
+// 文件里附带的图片会重新存为附件，正文中的图片引用改指向新附件。
 func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, error) {
 	if doc == nil {
 		return nil, errors.New("没有可导入的内容")
@@ -91,24 +96,95 @@ func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, erro
 	if !c.IsUnlocked() {
 		return nil, errVaultLocked
 	}
-	return c.noteService.Create(doc.Title, doc.Content)
+
+	content := doc.Content
+	var created []string
+	cleanup := func() {
+		for _, id := range created {
+			_ = c.attachmentService.Delete(id)
+		}
+	}
+	for _, a := range doc.Attachments {
+		att, err := c.attachmentService.CreateImage(attachments.CreateImageInput{
+			OriginalName: a.Name,
+			MIMEType:     a.MIMEType,
+			Data:         a.Data,
+		})
+		if err != nil {
+			cleanup()
+			return nil, fmt.Errorf("导入图片 %s 失败: %w", a.Name, err)
+		}
+		created = append(created, att.ID)
+		content = strings.ReplaceAll(content, "locknote-attachment://"+a.ID, "locknote-attachment://"+att.ID)
+	}
+
+	note, err := c.noteService.Create(doc.Title, content)
+	if err != nil {
+		cleanup()
+		return nil, err
+	}
+	for _, id := range created {
+		if err := c.attachmentService.AttachToNote(note.ID, id); err != nil {
+			return note, fmt.Errorf("图片关联到笔记失败: %w", err)
+		}
+	}
+	return note, nil
 }
 
-// ExportNoteSealed 把一篇笔记加密导出为 .naisho 文件（只含标题和正文，不含图片附件）。
-func (c *Core) ExportNoteSealed(noteID, outPath string) error {
+// attachmentRefPattern 匹配笔记正文中的图片引用，与 api.go 的 attachmentURLPattern 一致。
+var attachmentRefPattern = regexp.MustCompile(`locknote-attachment://([A-Za-z0-9_-]+)`)
+
+func attachmentRefs(content string) []string {
+	seen := map[string]bool{}
+	var ids []string
+	for _, m := range attachmentRefPattern.FindAllStringSubmatch(content, -1) {
+		if len(m) > 1 && !seen[m[1]] {
+			seen[m[1]] = true
+			ids = append(ids, m[1])
+		}
+	}
+	return ids
+}
+
+// ExportNoteSealed 把一篇笔记连同正文里引用的图片加密导出为 .naisho 文件。
+// 返回找不到（已被彻底删除）而没有包含进去的图片数量。
+func (c *Core) ExportNoteSealed(noteID, outPath string) (int, error) {
 	note, err := c.noteService.Get(noteID)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	key, err := c.vaultKeyCopy()
-	if err != nil {
-		return err
-	}
-	defer wipe(key)
 	doc := sealedfile.Document{
 		Title:    note.Title,
 		Content:  note.Content,
 		SealedAt: time.Now().UTC().Format(time.RFC3339),
 	}
-	return sealedfile.WriteDocument(key, doc, outPath)
+	missing := 0
+	total := 0
+	for _, id := range attachmentRefs(note.Content) {
+		meta, data, err := c.attachmentService.GetData(id)
+		if err != nil {
+			missing++
+			continue
+		}
+		total += len(data)
+		if total > sealedfile.MaxAttachmentsSize {
+			return 0, sealedfile.ErrAttachmentsTooBig
+		}
+		doc.Attachments = append(doc.Attachments, sealedfile.Attachment{
+			ID:       id,
+			Name:     meta.OriginalName,
+			MIMEType: meta.MIMEType,
+			Data:     data,
+		})
+	}
+
+	key, err := c.vaultKeyCopy()
+	if err != nil {
+		return 0, err
+	}
+	defer wipe(key)
+	if err := sealedfile.WriteDocument(key, doc, outPath); err != nil {
+		return 0, err
+	}
+	return missing, nil
 }

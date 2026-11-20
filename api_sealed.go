@@ -13,17 +13,33 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// SealedImageView 是加密文件中附带的一张图片。
+type SealedImageView struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	DataURL string `json:"dataURL"`
+}
+
 // SealedFileView 是给前端展示的 .naisho 文件内容。
 type SealedFileView struct {
-	Path         string `json:"path"`
-	FileName     string `json:"fileName"`
-	Title        string `json:"title"`
-	Content      string `json:"content"`
-	OriginalName string `json:"originalName"`
-	SealedAt     string `json:"sealedAt"`
+	Path         string            `json:"path"`
+	FileName     string            `json:"fileName"`
+	Title        string            `json:"title"`
+	Content      string            `json:"content"`
+	OriginalName string            `json:"originalName"`
+	SealedAt     string            `json:"sealedAt"`
+	Images       []SealedImageView `json:"images"`
 }
 
 func newSealedFileView(path string, doc *sealedfile.Document) *SealedFileView {
+	images := make([]SealedImageView, 0, len(doc.Attachments))
+	for _, a := range doc.Attachments {
+		images = append(images, SealedImageView{
+			ID:      a.ID,
+			Name:    a.Name,
+			DataURL: "data:" + a.MIMEType + ";base64," + base64.StdEncoding.EncodeToString(a.Data),
+		})
+	}
 	return &SealedFileView{
 		Path:         path,
 		FileName:     filepath.Base(path),
@@ -31,6 +47,7 @@ func newSealedFileView(path string, doc *sealedfile.Document) *SealedFileView {
 		Content:      doc.Content,
 		OriginalName: doc.OriginalName,
 		SealedAt:     doc.SealedAt,
+		Images:       images,
 	}
 }
 
@@ -125,8 +142,8 @@ func (a *App) ImportSealedFile(path, recoveryKey string) (*notes.Note, error) {
 	return c.ImportSealedDocument(doc)
 }
 
-// maxSealedDataBase64 限制前端传入的 base64 数据大小（约 48 MB 原始数据）。
-const maxSealedDataBase64 = 64 << 20
+// maxSealedDataBase64 限制前端传入的 base64 数据大小（略大于 .naisho 文件上限的 base64 长度）。
+const maxSealedDataBase64 = sealedfile.MaxSealedSize/3*4 + 4096
 
 func decodeSealedData(dataBase64 string) ([]byte, error) {
 	if len(dataBase64) > maxSealedDataBase64 {
@@ -191,7 +208,7 @@ func (a *App) ImportSealedFileData(dataBase64, recoveryKey string) (*notes.Note,
 // SealedExportResult 是加密导出笔记的结果。
 type SealedExportResult struct {
 	Path string `json:"path"`
-	// OmittedImages 是笔记中引用、但没有包含进加密文件的图片数量。
+	// OmittedImages 是笔记中引用、但已找不到而没有包含进加密文件的图片数量。
 	OmittedImages int `json:"omittedImages"`
 }
 
@@ -223,10 +240,11 @@ func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
 	if !isSealedFilePath(savePath) {
 		savePath += sealedfile.Extension
 	}
-	if err := c.ExportNoteSealed(noteID, savePath); err != nil {
+	missing, err := c.ExportNoteSealed(noteID, savePath)
+	if err != nil {
 		return nil, err
 	}
-	return &SealedExportResult{Path: savePath, OmittedImages: len(collectAttachmentIDs(note.Content))}, nil
+	return &SealedExportResult{Path: savePath, OmittedImages: missing}, nil
 }
 
 // ============ 双击 / “打开方式” 传入的 .naisho 文件 ============

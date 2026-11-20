@@ -210,6 +210,22 @@ export function SealedFileViewer() {
               {view.content}
             </pre>
           )}
+
+          {view && view.images?.length > 0 && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <div className="mb-2 text-xs font-medium text-gray-500">
+                {formatMessage(t.sealed.imagesTitle, { count: view.images.length })}
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {view.images.map((image) => (
+                  <figure key={image.id} className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                    <img src={image.dataURL} alt={image.name} className="h-32 w-full object-contain" />
+                    <figcaption className="truncate px-2 py-1 text-xs text-gray-500">{image.name}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {view && (

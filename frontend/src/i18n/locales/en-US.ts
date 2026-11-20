@@ -173,8 +173,8 @@ export const enUS: Translations = {
     exportMarkdownItem: 'Export Markdown',
     exportMarkdownItemDesc: 'Plain .md file, images exported alongside',
     exportSealedItem: 'Encrypted export (.naisho)',
-    exportSealedItemDesc: 'Only your LockNote can open it; images not included',
-    exportSealedImagesOmitted: 'Note: {count} image(s) in this note were not included in the encrypted file.',
+    exportSealedItemDesc: 'Only your LockNote can open it; images are encrypted too',
+    exportSealedImagesOmitted: 'Note: {count} image(s) could not be found and were not included in the encrypted file.',
     diagram: {
       chart: 'Diagram',
       code: 'Code',
@@ -423,6 +423,7 @@ export const enUS: Translations = {
     wrongVaultHint: 'This file may come from another vault. Enter the recovery key of the vault that encrypted it.',
     recoveryKeyPlaceholder: '16-character recovery key',
     openWithKey: 'Open with recovery key',
+    imagesTitle: 'Images ({count})',
   },
 
   // Settings

@@ -173,8 +173,8 @@ export const zhTW: Translations = {
     exportMarkdownItem: '匯出 Markdown',
     exportMarkdownItemDesc: '明文 .md 檔案，圖片一起匯出',
     exportSealedItem: '加密匯出（.naisho）',
-    exportSealedItemDesc: '只有你的 LockNote 能開啟，不含圖片',
-    exportSealedImagesOmitted: '注意：筆記裡的 {count} 張圖片沒有包含在加密檔案中。',
+    exportSealedItemDesc: '只有你的 LockNote 能開啟，圖片一起加密',
+    exportSealedImagesOmitted: '注意：有 {count} 張圖片已找不到，沒有包含在加密檔案中。',
     diagram: {
       chart: '圖表',
       code: '程式碼',
@@ -423,6 +423,7 @@ export const zhTW: Translations = {
     wrongVaultHint: '這個檔案可能來自另一個密碼庫。輸入加密它的密碼庫的恢復金鑰再試。',
     recoveryKeyPlaceholder: '16 位恢復金鑰',
     openWithKey: '用恢復金鑰開啟',
+    imagesTitle: '圖片（{count}）',
   },
 
   // 設定

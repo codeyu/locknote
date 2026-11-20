@@ -14,7 +14,7 @@
 //	24      ...   AES-256-GCM 密文 + 16 字节认证标签
 //
 // 前 12 字节文件头作为 GCM 的附加认证数据（AAD），被篡改即无法解密。
-// 明文是 Document 的 JSON。
+// 明文是 Document 的 JSON。payload 版本 2 起可以包含图片附件。
 package sealedfile
 
 import (
@@ -46,12 +46,15 @@ const (
 	headerSize     = 12
 	nonceSize      = 12
 	keySize        = 32
-	payloadVersion = 1
+	payloadVersion = 2
 
 	// MaxPlaintextSize 是可加密的原始文本文件大小上限。
 	MaxPlaintextSize = 16 << 20
-	// maxSealedSize 给文件头、JSON 转义和认证标签留出余量。
-	maxSealedSize = MaxPlaintextSize*2 + 4096
+	// MaxAttachmentsSize 是一个加密文件中图片附件的总大小上限。
+	MaxAttachmentsSize = 100 << 20
+	// MaxSealedSize 是 .naisho 文件的大小上限：给 JSON 转义、base64 膨胀和文件头留出余量。
+	MaxSealedSize = MaxPlaintextSize*2 + MaxAttachmentsSize*4/3 + 1<<20
+	maxSealedSize = MaxSealedSize
 )
 
 var (
@@ -65,7 +68,16 @@ var (
 	ErrEmptyFile          = errors.New("文件为空")
 	ErrNotText            = errors.New("文件不是 UTF-8 文本，请先转换为 UTF-8 编码")
 	ErrVerifyFailed       = errors.New("加密后校验失败，没有写出加密文件，原文件未改动")
+	ErrAttachmentsTooBig  = fmt.Errorf("图片总大小超过 %d MB，无法加密导出", MaxAttachmentsSize>>20)
 )
+
+// Attachment 是加密文件里附带的一张图片。ID 是它在原笔记正文中的引用 ID。
+type Attachment struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	MIMEType string `json:"mimeType"`
+	Data     []byte `json:"data"`
+}
 
 // Document 是加密文件里保存的内容。
 type Document struct {
@@ -74,6 +86,29 @@ type Document struct {
 	Content      string `json:"content"`
 	OriginalName string `json:"originalName"`
 	SealedAt     string `json:"sealedAt"`
+	// Attachments 是正文中引用的图片（payload 版本 2 起）。
+	Attachments []Attachment `json:"attachments,omitempty"`
+}
+
+// AttachmentsSize 返回所有附件数据的总字节数。
+func (d *Document) AttachmentsSize() int {
+	total := 0
+	for _, a := range d.Attachments {
+		total += len(a.Data)
+	}
+	return total
+}
+
+func sameAttachments(a, b []Attachment) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].ID != b[i].ID || a[i].MIMEType != b[i].MIMEType || !bytes.Equal(a[i].Data, b[i].Data) {
+			return false
+		}
+	}
+	return true
 }
 
 // SealResult 描述一次文件加密的结果。
@@ -111,6 +146,9 @@ func newGCM(key []byte) (cipher.AEAD, error) {
 
 // Seal 把文档加密成 .naisho 文件内容。
 func Seal(key []byte, doc Document) ([]byte, error) {
+	if doc.AttachmentsSize() > MaxAttachmentsSize {
+		return nil, ErrAttachmentsTooBig
+	}
 	gcm, err := newGCM(key)
 	if err != nil {
 		return nil, err
@@ -270,7 +308,7 @@ func WriteDocument(key []byte, doc Document, outPath string) error {
 		return err
 	}
 	written, err := OpenFile(key, outPath)
-	if err != nil || written.Content != doc.Content || written.Title != doc.Title {
+	if err != nil || written.Content != doc.Content || written.Title != doc.Title || !sameAttachments(written.Attachments, doc.Attachments) {
 		_ = os.Remove(outPath)
 		return ErrVerifyFailed
 	}
