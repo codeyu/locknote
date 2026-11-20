@@ -1,6 +1,6 @@
-// .locknote 加密文件相关的纯函数，便于单元测试。
+// .naisho 加密文件相关的纯函数，便于单元测试。
 
-export const SEALED_FILE_EXTENSION = '.locknote';
+export const SEALED_FILE_EXTENSION = '.naisho';
 
 export function isSealedFileName(name: string): boolean {
   return name.toLowerCase().endsWith(SEALED_FILE_EXTENSION);
@@ -35,7 +35,7 @@ export function baseName(path: string): string {
   return parts[parts.length - 1] || path;
 }
 
-/** 要在查看器中打开的 .locknote：本地路径（双击、选择文件）或拖入窗口的文件内容（base64）。 */
+/** 要在查看器中打开的 .naisho：本地路径（双击、选择文件）或拖入窗口的文件内容（base64）。 */
 export type SealedFileSource =
   | { kind: 'path'; path: string }
   | { kind: 'data'; name: string; data: string };

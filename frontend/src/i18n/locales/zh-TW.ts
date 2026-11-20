@@ -172,7 +172,7 @@ export const zhTW: Translations = {
     contextExportSealed: '加密匯出',
     exportMarkdownItem: '匯出 Markdown',
     exportMarkdownItemDesc: '明文 .md 檔案，圖片一起匯出',
-    exportSealedItem: '加密匯出（.locknote）',
+    exportSealedItem: '加密匯出（.naisho）',
     exportSealedItemDesc: '只有你的 LockNote 能開啟，不含圖片',
     exportSealedImagesOmitted: '注意：筆記裡的 {count} 張圖片沒有包含在加密檔案中。',
     diagram: {
@@ -368,7 +368,7 @@ export const zhTW: Translations = {
     createSingle: '新建筆記',
     createMultiple: '新建 {count} 篇筆記',
     skippedCount: '已略過 {count} 個檔案（不支援的類型、空檔案或超過大小限制）',
-    nothingToImport: '只支援拖入 Markdown、TXT 或 .locknote 檔案。圖片請拖到正在編輯的筆記裡。',
+    nothingToImport: '只支援拖入 Markdown、TXT 或 .naisho 檔案。圖片請拖到正在編輯的筆記裡。',
     partialFailure: '已新建 {count} 篇，其餘失敗：',
   },
 
@@ -398,7 +398,7 @@ export const zhTW: Translations = {
   sealed: {
     sectionTitle: '檔案加密',
     sealTitle: '加密文字檔',
-    sealDesc: '把 .txt / .md 檔案加密為 .locknote 檔案，只有你的 LockNote 能開啟',
+    sealDesc: '把 .txt / .md 檔案加密為 .naisho 檔案，只有你的 LockNote 能開啟',
     sealButton: '選擇檔案並加密',
     removeOriginal: '加密成功後刪除原檔案',
     sealSuccess: '已加密為：{path}',
@@ -408,8 +408,8 @@ export const zhTW: Translations = {
     sealFailed: '加密失敗',
     residualWarning: '刪除原檔案不能保證磁碟上沒有殘留：編輯器的歷史記錄（如 VS Code 本機歷史）、雲端硬碟的歷史版本、資源回收筒或備份裡可能還有副本，建議一併清理，並開啟全磁碟加密。',
     openTitle: '開啟加密檔案',
-    openDesc: '檢視 .locknote 檔案的內容，也可以匯入到筆記庫',
-    openButton: '選擇 .locknote 檔案',
+    openDesc: '檢視 .naisho 檔案的內容，也可以匯入到筆記庫',
+    openButton: '選擇 .naisho 檔案',
     viewerTitle: '加密檔案',
     originalName: '原檔名',
     sealedAt: '加密時間',

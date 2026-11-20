@@ -13,7 +13,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// SealedFileView 是给前端展示的 .locknote 文件内容。
+// SealedFileView 是给前端展示的 .naisho 文件内容。
 type SealedFileView struct {
 	Path         string `json:"path"`
 	FileName     string `json:"fileName"`
@@ -38,7 +38,7 @@ func isSealedFilePath(path string) bool {
 	return strings.EqualFold(filepath.Ext(path), sealedfile.Extension)
 }
 
-// SealTextFile 让用户选择一个文本文件，加密为同目录下的 .locknote 文件。
+// SealTextFile 让用户选择一个文本文件，加密为同目录下的 .naisho 文件。
 // 用户取消选择时返回 nil, nil。
 func (a *App) SealTextFile(removeOriginal bool) (*sealedfile.SealResult, error) {
 	c, err := a.coreOrErr()
@@ -63,7 +63,7 @@ func (a *App) SealTextFile(removeOriginal bool) (*sealedfile.SealResult, error) 
 	return c.SealTextFile(path, removeOriginal)
 }
 
-// ChooseSealedFile 让用户选择一个 .locknote 文件，返回其路径；取消时返回空字符串。
+// ChooseSealedFile 让用户选择一个 .naisho 文件，返回其路径；取消时返回空字符串。
 func (a *App) ChooseSealedFile() (string, error) {
 	if _, err := a.coreOrErr(); err != nil {
 		return "", err
@@ -72,12 +72,12 @@ func (a *App) ChooseSealedFile() (string, error) {
 	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "打开 LockNote 加密文件",
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LockNote 加密文件 (*.locknote)", Pattern: "*.locknote"},
+			{DisplayName: "LockNote 加密文件 (*.naisho)", Pattern: "*.naisho"},
 		},
 	})
 }
 
-// OpenSealedFile 用当前密码库解密指定的 .locknote 文件。
+// OpenSealedFile 用当前密码库解密指定的 .naisho 文件。
 func (a *App) OpenSealedFile(path string) (*SealedFileView, error) {
 	c, err := a.coreOrErr()
 	if err != nil {
@@ -91,7 +91,7 @@ func (a *App) OpenSealedFile(path string) (*SealedFileView, error) {
 	return newSealedFileView(path, doc), nil
 }
 
-// OpenSealedFileWithRecoveryKey 用恢复密钥解密 .locknote 文件（来自另一个密码库时使用）。
+// OpenSealedFileWithRecoveryKey 用恢复密钥解密 .naisho 文件（来自另一个密码库时使用）。
 func (a *App) OpenSealedFileWithRecoveryKey(path, recoveryKey string) (*SealedFileView, error) {
 	c, err := a.coreOrErr()
 	if err != nil {
@@ -105,7 +105,7 @@ func (a *App) OpenSealedFileWithRecoveryKey(path, recoveryKey string) (*SealedFi
 	return newSealedFileView(path, doc), nil
 }
 
-// ImportSealedFile 把 .locknote 文件的内容存为密码库中的新笔记。
+// ImportSealedFile 把 .naisho 文件的内容存为密码库中的新笔记。
 // recoveryKey 为空时使用当前密码库的密钥解密。
 func (a *App) ImportSealedFile(path, recoveryKey string) (*notes.Note, error) {
 	c, err := a.coreOrErr()
@@ -139,7 +139,7 @@ func decodeSealedData(dataBase64 string) ([]byte, error) {
 	return data, nil
 }
 
-// OpenSealedFileData 解密拖入窗口的 .locknote 文件（WebView 拿不到文件路径，只能传内容）。
+// OpenSealedFileData 解密拖入窗口的 .naisho 文件（WebView 拿不到文件路径，只能传内容）。
 // recoveryKey 为空时使用当前密码库的密钥。
 func (a *App) OpenSealedFileData(fileName, dataBase64, recoveryKey string) (*SealedFileView, error) {
 	c, err := a.coreOrErr()
@@ -165,7 +165,7 @@ func (a *App) OpenSealedFileData(fileName, dataBase64, recoveryKey string) (*Sea
 	return view, nil
 }
 
-// ImportSealedFileData 把拖入的 .locknote 文件内容存为新笔记。
+// ImportSealedFileData 把拖入的 .naisho 文件内容存为新笔记。
 func (a *App) ImportSealedFileData(dataBase64, recoveryKey string) (*notes.Note, error) {
 	c, err := a.coreOrErr()
 	if err != nil {
@@ -195,7 +195,7 @@ type SealedExportResult struct {
 	OmittedImages int `json:"omittedImages"`
 }
 
-// ExportNoteAsLockNote 把当前笔记加密导出为 .locknote 文件。用户取消时返回 nil, nil。
+// ExportNoteAsLockNote 把当前笔记加密导出为 .naisho 文件。用户取消时返回 nil, nil。
 func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
 	c, err := a.coreOrErr()
 	if err != nil {
@@ -211,7 +211,7 @@ func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
 		Title:           "加密导出笔记",
 		DefaultFilename: sanitizeFileName(note.Title) + sealedfile.Extension,
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LockNote 加密文件 (*.locknote)", Pattern: "*.locknote"},
+			{DisplayName: "LockNote 加密文件 (*.naisho)", Pattern: "*.naisho"},
 		},
 	})
 	if err != nil {
@@ -229,9 +229,9 @@ func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
 	return &SealedExportResult{Path: savePath, OmittedImages: len(collectAttachmentIDs(note.Content))}, nil
 }
 
-// ============ 双击 / “打开方式” 传入的 .locknote 文件 ============
+// ============ 双击 / “打开方式” 传入的 .naisho 文件 ============
 
-// queueSealedFiles 记录系统交给本程序打开的 .locknote 文件，等前端解锁后取走。
+// queueSealedFiles 记录系统交给本程序打开的 .naisho 文件，等前端解锁后取走。
 func (a *App) queueSealedFiles(paths []string) {
 	added := false
 	a.pendingMu.Lock()
@@ -251,7 +251,7 @@ func (a *App) queueSealedFiles(paths []string) {
 	}
 }
 
-// TakePendingSealedFile 取出一个等待打开的 .locknote 文件路径；没有时返回空字符串。
+// TakePendingSealedFile 取出一个等待打开的 .naisho 文件路径；没有时返回空字符串。
 func (a *App) TakePendingSealedFile() string {
 	a.pendingMu.Lock()
 	defer a.pendingMu.Unlock()
@@ -269,7 +269,7 @@ func (a *App) onFileOpen(path string) {
 	a.focusWindow()
 }
 
-// onSecondInstanceLaunch 在程序已运行时再次双击 .locknote 文件时调用：
+// onSecondInstanceLaunch 在程序已运行时再次双击 .naisho 文件时调用：
 // 把文件交给已运行的实例，而不是再开一个窗口。
 func (a *App) onSecondInstanceLaunch(data options.SecondInstanceData) {
 	a.queueSealedFiles(data.Args)

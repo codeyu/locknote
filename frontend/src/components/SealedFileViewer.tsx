@@ -7,7 +7,7 @@ import { main } from '../../wailsjs/go/models';
 import { formatSealedAt, isWrongVaultError, type SealedFileSource } from '../sealedFile';
 
 /**
- * 只读查看 .locknote 加密文件。
+ * 只读查看 .naisho 加密文件。
  * 由 store.sealedFile 驱动：可以是文件路径，也可以是拖入窗口的文件内容。
  * 关闭时清空内容并取下一个待打开的文件。
  * 应用锁定时 MainLayout 卸载、store 重置，解密内容随之丢弃。

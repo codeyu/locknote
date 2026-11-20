@@ -1,6 +1,6 @@
-// Package sealedfile 实现单文件加密格式（.locknote）。
+// Package sealedfile 实现单文件加密格式（.naisho）。
 //
-// 一个 .locknote 文件保存一篇文本笔记，用密码库的 dataKey（AES-256-GCM）加密，
+// 一个 .naisho 文件保存一篇文本笔记，用密码库的 dataKey（AES-256-GCM）加密，
 // 只能由同一个密码库（或输入同一恢复密钥的 LockNote）打开。
 //
 // 文件布局：
@@ -38,7 +38,7 @@ import (
 
 const (
 	// Extension 是加密文件的扩展名。
-	Extension = ".locknote"
+	Extension = ".naisho"
 
 	magic          = "LOCKNOTE"
 	formatVersion  = byte(1)
@@ -93,7 +93,7 @@ func header() []byte {
 	return h
 }
 
-// IsSealed 判断数据是否以 .locknote 文件头开始。
+// IsSealed 判断数据是否以 .naisho 文件头开始。
 func IsSealed(data []byte) bool {
 	return len(data) >= len(magic) && string(data[:len(magic)]) == magic
 }
@@ -109,7 +109,7 @@ func newGCM(key []byte) (cipher.AEAD, error) {
 	return cipher.NewGCM(block)
 }
 
-// Seal 把文档加密成 .locknote 文件内容。
+// Seal 把文档加密成 .naisho 文件内容。
 func Seal(key []byte, doc Document) ([]byte, error) {
 	gcm, err := newGCM(key)
 	if err != nil {
@@ -132,7 +132,7 @@ func Seal(key []byte, doc Document) ([]byte, error) {
 	return out, nil
 }
 
-// Open 用给定密钥解密 .locknote 文件内容。
+// Open 用给定密钥解密 .naisho 文件内容。
 func Open(key []byte, data []byte) (*Document, error) {
 	if !IsSealed(data) || len(data) < headerSize+nonceSize {
 		return nil, ErrNotSealedFile
@@ -176,7 +176,7 @@ func OpenWithCandidates(keys [][]byte, data []byte) (*Document, error) {
 	return nil, lastErr
 }
 
-// ReadFile 读取 .locknote 文件并检查大小。
+// ReadFile 读取 .naisho 文件并检查大小。
 func ReadFile(path string) ([]byte, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -198,7 +198,7 @@ func ReadFile(path string) ([]byte, error) {
 	return data, nil
 }
 
-// OpenFile 读取并解密 .locknote 文件。
+// OpenFile 读取并解密 .naisho 文件。
 func OpenFile(key []byte, path string) (*Document, error) {
 	data, err := ReadFile(path)
 	if err != nil {
@@ -236,7 +236,7 @@ func readText(path string) (string, error) {
 	return string(data), nil
 }
 
-// OutputPathFor 返回与原文件同目录、同名的 .locknote 路径；已存在时追加 " (2)"、" (3)"……
+// OutputPathFor 返回与原文件同目录、同名的 .naisho 路径；已存在时追加 " (2)"、" (3)"……
 func OutputPathFor(srcPath string) (string, error) {
 	dir := filepath.Dir(srcPath)
 	base := filepath.Base(srcPath)
@@ -277,7 +277,7 @@ func WriteDocument(key []byte, doc Document, outPath string) error {
 	return nil
 }
 
-// SealTextFile 把文本文件加密为同目录下的 .locknote 文件。
+// SealTextFile 把文本文件加密为同目录下的 .naisho 文件。
 //
 // 步骤：读取并校验原文 → 加密 → 原子写入 → 重新读取并解密，确认与原文一致 →
 // （可选）删除原文件。任何一步在删除之前失败，都不会动原文件。

@@ -15,7 +15,7 @@ test('classifyDroppedFiles sorts files by kind and skips bad ones', () => {
     f('a.md'),
     f('b.TXT'),
     f('c.markdown'),
-    f('secret.locknote'),
+    f('secret.naisho'),
     f('photo.png', 10, 'image/png'),
     f('doc.pdf'),
     f('empty.txt', 0),
@@ -23,7 +23,7 @@ test('classifyDroppedFiles sorts files by kind and skips bad ones', () => {
   ];
   const result = classifyDroppedFiles(files);
   assert.deepEqual(result.text.map((x) => x.name), ['a.md', 'b.TXT', 'c.markdown']);
-  assert.deepEqual(result.sealed.map((x) => x.name), ['secret.locknote']);
+  assert.deepEqual(result.sealed.map((x) => x.name), ['secret.naisho']);
   assert.deepEqual(result.images.map((x) => x.name), ['photo.png']);
   assert.deepEqual(result.skipped.map((x) => x.name), ['doc.pdf', 'empty.txt', 'huge.md']);
 });
@@ -32,7 +32,7 @@ test('zoneHandlesDrop lets the editor keep single text or image drops only', () 
   assert.equal(zoneHandlesDrop('editor', [f('a.md')]), true);
   assert.equal(zoneHandlesDrop('editor', [f('p.png', 1, 'image/png')]), true);
   assert.equal(zoneHandlesDrop('editor', [f('a.md'), f('b.md')]), false);
-  assert.equal(zoneHandlesDrop('editor', [f('x.locknote')]), false);
+  assert.equal(zoneHandlesDrop('editor', [f('x.naisho')]), false);
   assert.equal(zoneHandlesDrop('editor', [f('x.pdf')]), false);
   assert.equal(zoneHandlesDrop('images', [f('p.png', 1, 'image/png'), f('q.jpg', 1, 'image/jpeg')]), true);
   assert.equal(zoneHandlesDrop('images', [f('p.png', 1, 'image/png'), f('a.md')]), false);

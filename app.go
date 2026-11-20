@@ -36,7 +36,7 @@ type App struct {
 	allowClose        atomic.Bool
 	closeRequestStart atomic.Bool
 
-	// 系统通过双击或“打开方式”交给本程序、尚未展示的 .locknote 文件
+	// 系统通过双击或“打开方式”交给本程序、尚未展示的 .naisho 文件
 	pendingMu     sync.Mutex
 	pendingSealed []string
 }
@@ -46,7 +46,7 @@ func NewApp() *App {
 	if err != nil {
 		homeDir = "."
 	}
-	dataDir := filepath.Join(homeDir, ".locknote")
+	dataDir := filepath.Join(homeDir, ".naisho")
 	legacyDir := filepath.Join(homeDir, ".notebase")
 	if _, err := os.Stat(legacyDir); err == nil {
 		if _, err := os.Stat(dataDir); os.IsNotExist(err) {

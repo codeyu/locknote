@@ -45,7 +45,7 @@ function dropZoneOf(target: EventTarget | null): FileDropZone | null {
 
 /**
  * 全局拖放导入：把文件拖到窗口任意位置，
- * 文本文件（.md / .markdown / .txt，可多个）预览后新建为笔记，.locknote 文件用查看器打开。
+ * 文本文件（.md / .markdown / .txt，可多个）预览后新建为笔记，.naisho 文件用查看器打开。
  * 编辑器和图片管理里能自己处理的拖放（单个文本或图片、纯图片）留给它们。
  */
 export function FileDropImporter() {
@@ -89,7 +89,7 @@ export function FileDropImporter() {
     const { text, sealed, images, skipped: skippedFiles } = classifyDroppedFiles(files);
     const skippedNames = [...images, ...skippedFiles].map((file) => file.name);
 
-    // .locknote：一次打开一个（取第一个）
+    // .naisho：一次打开一个（取第一个）
     if (sealed.length > 0 && text.length === 0) {
       try {
         const bytes = new Uint8Array(await sealed[0].arrayBuffer());

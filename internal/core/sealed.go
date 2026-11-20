@@ -26,7 +26,7 @@ func wipe(b []byte) {
 	}
 }
 
-// SealTextFile 用当前密码库的 dataKey 把文本文件加密为同目录下的 .locknote 文件。
+// SealTextFile 用当前密码库的 dataKey 把文本文件加密为同目录下的 .naisho 文件。
 // removeOriginal 为 true 时，在加密文件写入并校验通过后删除原文件。
 func (c *Core) SealTextFile(path string, removeOriginal bool) (*sealedfile.SealResult, error) {
 	key, err := c.vaultKeyCopy()
@@ -37,7 +37,7 @@ func (c *Core) SealTextFile(path string, removeOriginal bool) (*sealedfile.SealR
 	return sealedfile.SealTextFile(key, path, removeOriginal, time.Now())
 }
 
-// OpenSealedFile 用当前密码库的 dataKey 解密 .locknote 文件。
+// OpenSealedFile 用当前密码库的 dataKey 解密 .naisho 文件。
 func (c *Core) OpenSealedFile(path string) (*sealedfile.Document, error) {
 	data, err := sealedfile.ReadFile(path)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *Core) OpenSealedFile(path string) (*sealedfile.Document, error) {
 	return c.OpenSealedData(data)
 }
 
-// OpenSealedData 用当前密码库的 dataKey 解密 .locknote 文件内容（例如拖入窗口的文件）。
+// OpenSealedData 用当前密码库的 dataKey 解密 .naisho 文件内容（例如拖入窗口的文件）。
 func (c *Core) OpenSealedData(data []byte) (*sealedfile.Document, error) {
 	key, err := c.vaultKeyCopy()
 	if err != nil {
@@ -56,7 +56,7 @@ func (c *Core) OpenSealedData(data []byte) (*sealedfile.Document, error) {
 	return sealedfile.Open(key, data)
 }
 
-// OpenSealedFileWithRecoveryKey 用恢复密钥解密 .locknote 文件，
+// OpenSealedFileWithRecoveryKey 用恢复密钥解密 .naisho 文件，
 // 用于打开由另一个密码库（同一恢复密钥）加密的文件。
 func (c *Core) OpenSealedFileWithRecoveryKey(path, displayKey string) (*sealedfile.Document, error) {
 	data, err := sealedfile.ReadFile(path)
@@ -66,7 +66,7 @@ func (c *Core) OpenSealedFileWithRecoveryKey(path, displayKey string) (*sealedfi
 	return c.OpenSealedDataWithRecoveryKey(data, displayKey)
 }
 
-// OpenSealedDataWithRecoveryKey 用恢复密钥解密 .locknote 文件内容。
+// OpenSealedDataWithRecoveryKey 用恢复密钥解密 .naisho 文件内容。
 func (c *Core) OpenSealedDataWithRecoveryKey(data []byte, displayKey string) (*sealedfile.Document, error) {
 	if !c.IsUnlocked() {
 		return nil, errVaultLocked
@@ -94,7 +94,7 @@ func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, erro
 	return c.noteService.Create(doc.Title, doc.Content)
 }
 
-// ExportNoteSealed 把一篇笔记加密导出为 .locknote 文件（只含标题和正文，不含图片附件）。
+// ExportNoteSealed 把一篇笔记加密导出为 .naisho 文件（只含标题和正文，不含图片附件）。
 func (c *Core) ExportNoteSealed(noteID, outPath string) error {
 	note, err := c.noteService.Get(noteID)
 	if err != nil {

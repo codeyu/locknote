@@ -170,7 +170,7 @@ export const zhCN = {
     contextExportSealed: '加密导出',
     exportMarkdownItem: '导出 Markdown',
     exportMarkdownItemDesc: '明文 .md 文件，图片一起导出',
-    exportSealedItem: '加密导出（.locknote）',
+    exportSealedItem: '加密导出（.naisho）',
     exportSealedItemDesc: '只有你的 LockNote 能打开，不含图片',
     exportSealedImagesOmitted: '注意：笔记里的 {count} 张图片没有包含在加密文件中。',
     diagram: {
@@ -366,7 +366,7 @@ export const zhCN = {
     createSingle: '新建笔记',
     createMultiple: '新建 {count} 篇笔记',
     skippedCount: '已跳过 {count} 个文件（不支持的类型、空文件或超过大小限制）',
-    nothingToImport: '只支持拖入 Markdown、TXT 或 .locknote 文件。图片请拖到正在编辑的笔记里。',
+    nothingToImport: '只支持拖入 Markdown、TXT 或 .naisho 文件。图片请拖到正在编辑的笔记里。',
     partialFailure: '已新建 {count} 篇，其余失败：',
   },
 
@@ -396,7 +396,7 @@ export const zhCN = {
   sealed: {
     sectionTitle: '文件加密',
     sealTitle: '加密文本文件',
-    sealDesc: '把 .txt / .md 文件加密为 .locknote 文件，只有你的 LockNote 能打开',
+    sealDesc: '把 .txt / .md 文件加密为 .naisho 文件，只有你的 LockNote 能打开',
     sealButton: '选择文件并加密',
     removeOriginal: '加密成功后删除原文件',
     sealSuccess: '已加密为：{path}',
@@ -406,8 +406,8 @@ export const zhCN = {
     sealFailed: '加密失败',
     residualWarning: '删除原文件不能保证磁盘上没有残留：编辑器的历史记录（如 VS Code 本地历史）、网盘的历史版本、回收站或备份里可能还有副本，建议一并清理，并开启全盘加密。',
     openTitle: '打开加密文件',
-    openDesc: '查看 .locknote 文件的内容，也可以导入到笔记库',
-    openButton: '选择 .locknote 文件',
+    openDesc: '查看 .naisho 文件的内容，也可以导入到笔记库',
+    openButton: '选择 .naisho 文件',
     viewerTitle: '加密文件',
     originalName: '原文件名',
     sealedAt: '加密时间',

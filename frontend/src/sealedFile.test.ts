@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { baseName, formatSealedAt, isSealedFileName, isWrongVaultError } from './sealedFile.js';
 
-test('isSealedFileName matches the .locknote extension case-insensitively', () => {
-  assert.equal(isSealedFileName('note.locknote'), true);
-  assert.equal(isSealedFileName('NOTE.LockNote'), true);
+test('isSealedFileName matches the .naisho extension case-insensitively', () => {
+  assert.equal(isSealedFileName('note.naisho'), true);
+  assert.equal(isSealedFileName('NOTE.Naisho'), true);
   assert.equal(isSealedFileName('note.txt'), false);
-  assert.equal(isSealedFileName('locknote'), false);
+  assert.equal(isSealedFileName('naisho'), false);
 });
 
 test('isWrongVaultError detects the backend wrong-key message', () => {
@@ -23,7 +23,7 @@ test('formatSealedAt formats valid timestamps and ignores invalid ones', () => {
 });
 
 test('baseName handles Windows and POSIX paths', () => {
-  assert.equal(baseName('C:\\Users\\me\\note.locknote'), 'note.locknote');
-  assert.equal(baseName('/home/me/note.locknote'), 'note.locknote');
-  assert.equal(baseName('note.locknote'), 'note.locknote');
+  assert.equal(baseName('C:\\Users\\me\\note.naisho'), 'note.naisho');
+  assert.equal(baseName('/home/me/note.naisho'), 'note.naisho');
+  assert.equal(baseName('note.naisho'), 'note.naisho');
 });

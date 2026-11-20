@@ -121,7 +121,7 @@ func TestSealTextFileWritesVerifiesAndRemovesOriginal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seal file: %v", err)
 	}
-	if result.OutputPath != filepath.Join(dir, "note.locknote") {
+	if result.OutputPath != filepath.Join(dir, "note.naisho") {
 		t.Fatalf("output = %s", result.OutputPath)
 	}
 	if !result.RemovedOriginal || result.RemoveError != "" {
@@ -173,17 +173,17 @@ func TestSealTextFileKeepsOriginalWhenAsked(t *testing.T) {
 
 func TestSealTextFileDoesNotOverwriteExistingOutput(t *testing.T) {
 	dir := t.TempDir()
-	existing := writeFile(t, dir, "note.locknote", []byte("previous"))
+	existing := writeFile(t, dir, "note.naisho", []byte("previous"))
 	src := writeFile(t, dir, "note.txt", []byte("new"))
 	result, err := SealTextFile(testKey, src, false, testNow)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.OutputPath != filepath.Join(dir, "note (2).locknote") {
+	if result.OutputPath != filepath.Join(dir, "note (2).naisho") {
 		t.Fatalf("output = %s", result.OutputPath)
 	}
 	if data, _ := os.ReadFile(existing); string(data) != "previous" {
-		t.Fatal("existing .locknote file was overwritten")
+		t.Fatal("existing .naisho file was overwritten")
 	}
 }
 
@@ -200,7 +200,7 @@ func TestSealTextFileRejectsBadInputsAndKeepsOriginal(t *testing.T) {
 		{"gbk.txt", []byte{0xc4, 0xe3, 0xba, 0xc3}, ErrNotText},
 		{"binary.txt", []byte("ab\x00cd"), ErrNotText},
 		{"renamed.txt", sealedData, ErrAlreadySealed},
-		{"already.locknote", []byte("text"), ErrAlreadySealed},
+		{"already.naisho", []byte("text"), ErrAlreadySealed},
 	}
 	for _, tc := range cases {
 		src := writeFile(t, dir, tc.name, tc.data)
@@ -232,7 +232,7 @@ func TestSealTextFileRejectsBadInputsAndKeepsOriginal(t *testing.T) {
 
 func TestReadFileRejectsNonSealed(t *testing.T) {
 	dir := t.TempDir()
-	plain := writeFile(t, dir, "plain.locknote", []byte("not really"))
+	plain := writeFile(t, dir, "plain.naisho", []byte("not really"))
 	if _, err := OpenFile(testKey, plain); !errors.Is(err, ErrNotSealedFile) {
 		t.Fatalf("err = %v", err)
 	}
@@ -240,7 +240,7 @@ func TestReadFileRejectsNonSealed(t *testing.T) {
 
 func TestWriteDocument(t *testing.T) {
 	dir := t.TempDir()
-	out := filepath.Join(dir, "exported.locknote")
+	out := filepath.Join(dir, "exported.naisho")
 	doc := Document{Title: "导出", Content: "body", SealedAt: "2026-11-20T06:00:00Z"}
 	if err := WriteDocument(testKey, doc, out); err != nil {
 		t.Fatal(err)
@@ -249,7 +249,7 @@ func TestWriteDocument(t *testing.T) {
 	if err != nil || got.Title != "导出" || got.Content != "body" {
 		t.Fatalf("got=%+v err=%v", got, err)
 	}
-	if err := WriteDocument([]byte("bad"), doc, filepath.Join(dir, "x.locknote")); !errors.Is(err, ErrInvalidKey) {
+	if err := WriteDocument([]byte("bad"), doc, filepath.Join(dir, "x.naisho")); !errors.Is(err, ErrInvalidKey) {
 		t.Fatalf("bad key: err = %v", err)
 	}
 }

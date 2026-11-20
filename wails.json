@@ -17,7 +17,7 @@
     "copyright": "Copyright (c) 2026 LockNote.app",
     "fileAssociations": [
       {
-        "ext": "locknote",
+        "ext": "naisho",
         "name": "LockNote Encrypted Note",
         "description": "LockNote 加密笔记文件",
         "iconName": "locknoteFileIcon",

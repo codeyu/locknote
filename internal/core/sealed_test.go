@@ -61,7 +61,7 @@ func TestExportNoteSealed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out := filepath.Join(t.TempDir(), "账号.locknote")
+	out := filepath.Join(t.TempDir(), "账号.naisho")
 	if err := c.ExportNoteSealed(note.ID, out); err != nil {
 		t.Fatal(err)
 	}

@@ -28,7 +28,7 @@ export function isImageFile(file: FileLike): boolean {
   return file.type.startsWith('image/');
 }
 
-/** 把拖入的文件分成文本、.locknote、图片和跳过（不支持、为空或过大）几类。 */
+/** 把拖入的文件分成文本、.naisho、图片和跳过（不支持、为空或过大）几类。 */
 export function classifyDroppedFiles<T extends FileLike>(files: T[]): ClassifiedFiles<T> {
   const result: ClassifiedFiles<T> = { text: [], sealed: [], images: [], skipped: [] };
   for (const file of files) {
@@ -55,7 +55,7 @@ export type FileDropZone = 'editor' | 'images';
  * 判断某个拖放区域是否自己处理这次拖入：
  * - 编辑器：单个图片（插入当前笔记）或单个文本文件（弹窗选择新建或替换）
  * - 图片管理：全部是图片
- * 其余情况交给全局导入（新建笔记 / 打开 .locknote）。
+ * 其余情况交给全局导入（新建笔记 / 打开 .naisho）。
  */
 export function zoneHandlesDrop(zone: FileDropZone | null, files: FileLike[]): boolean {
   if (!zone || files.length === 0) return false;

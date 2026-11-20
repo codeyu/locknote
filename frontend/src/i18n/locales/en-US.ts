@@ -172,7 +172,7 @@ export const enUS: Translations = {
     contextExportSealed: 'Encrypted export',
     exportMarkdownItem: 'Export Markdown',
     exportMarkdownItemDesc: 'Plain .md file, images exported alongside',
-    exportSealedItem: 'Encrypted export (.locknote)',
+    exportSealedItem: 'Encrypted export (.naisho)',
     exportSealedItemDesc: 'Only your LockNote can open it; images not included',
     exportSealedImagesOmitted: 'Note: {count} image(s) in this note were not included in the encrypted file.',
     diagram: {
@@ -368,7 +368,7 @@ export const enUS: Translations = {
     createSingle: 'Create note',
     createMultiple: 'Create {count} notes',
     skippedCount: 'Skipped {count} files (unsupported type, empty, or too large)',
-    nothingToImport: 'Only Markdown, TXT, or .locknote files can be dropped here. Drop images onto the note you are editing.',
+    nothingToImport: 'Only Markdown, TXT, or .naisho files can be dropped here. Drop images onto the note you are editing.',
     partialFailure: 'Created {count}; the rest failed: ',
   },
 
@@ -398,7 +398,7 @@ export const enUS: Translations = {
   sealed: {
     sectionTitle: 'File encryption',
     sealTitle: 'Encrypt a text file',
-    sealDesc: 'Turn a .txt / .md file into a .locknote file that only your LockNote can open',
+    sealDesc: 'Turn a .txt / .md file into a .naisho file that only your LockNote can open',
     sealButton: 'Choose file and encrypt',
     removeOriginal: 'Delete the original after encrypting',
     sealSuccess: 'Encrypted to: {path}',
@@ -408,8 +408,8 @@ export const enUS: Translations = {
     sealFailed: 'Encryption failed',
     residualWarning: 'Deleting the original does not guarantee nothing is left on disk: editor history (such as VS Code Local History), cloud-drive versions, the trash or backups may still hold copies. Clean those up too, and turn on full-disk encryption.',
     openTitle: 'Open an encrypted file',
-    openDesc: 'View a .locknote file, or import it into your vault',
-    openButton: 'Choose a .locknote file',
+    openDesc: 'View a .naisho file, or import it into your vault',
+    openButton: 'Choose a .naisho file',
     viewerTitle: 'Encrypted file',
     originalName: 'Original name',
     sealedAt: 'Encrypted at',

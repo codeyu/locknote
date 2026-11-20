@@ -57,7 +57,7 @@ export function MainLayout() {
     loadData();
   }, [setNotes, setTags, setNotebooks, setSettings, setUndecryptableNotes]);
 
-  // 双击 / “打开方式”传入的 .locknote 文件：解锁后（本组件挂载时）以及运行中收到通知时打开
+  // 双击 / “打开方式”传入的 .naisho 文件：解锁后（本组件挂载时）以及运行中收到通知时打开
   useEffect(() => {
     const openPendingSealedFile = async () => {
       if (useStore.getState().sealedFile) return;

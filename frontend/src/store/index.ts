@@ -32,7 +32,7 @@ interface AppState {
   isMultiSelectMode: boolean;
   expandedNotebooks: Set<string>;
   isNoteListCollapsed: boolean;
-  /** 正在查看的 .locknote 加密文件 */
+  /** 正在查看的 .naisho 加密文件 */
   sealedFile: SealedFileSource | null;
 
   setUnlocked: (unlocked: boolean) => void;
