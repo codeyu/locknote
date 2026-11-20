@@ -702,7 +702,7 @@ func CreateBackup(outputPath string) error {
 		if coreInstance == nil {
 			return errNotInitialized
 		}
-		return coreInstance.Backup().CreateBackup(outputPath)
+		return coreInstance.CreateBackup(outputPath)
 	})
 }
 

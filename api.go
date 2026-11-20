@@ -419,7 +419,7 @@ func (a *App) CreateBackup() (string, error) {
 		return "", nil
 	}
 
-	err = c.Backup().CreateBackup(savePath)
+	err = c.CreateBackup(savePath)
 	if err != nil {
 		return "", err
 	}

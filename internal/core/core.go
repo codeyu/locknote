@@ -581,7 +581,7 @@ func (c *Core) RestoreBackup(path string) error {
 	if key == nil {
 		return errors.New("请先解锁")
 	}
-	if err := c.backupService.RestoreBackup(path, c.cryptoService, key); err != nil {
+	if err := c.backupService.RestoreBackupWithDatabase(path, c.cryptoService, key, c.db.RestoreFromSnapshot); err != nil {
 		return err
 	}
 	c.noteService.ClearContentCache()
@@ -589,6 +589,20 @@ func (c *Core) RestoreBackup(path string) error {
 }
 
 // ============ 设置相关 ============
+
+// CreateBackup 创建完整备份：加密文件 + 数据库快照（待办、标签、笔记本等）。
+func (c *Core) CreateBackup(outputPath string) error {
+	tempDir, err := os.MkdirTemp("", "locknote-backup-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tempDir)
+	snapshotPath := filepath.Join(tempDir, "locknote.db")
+	if err := c.db.SnapshotTo(snapshotPath); err != nil {
+		return fmt.Errorf("数据库快照失败: %w", err)
+	}
+	return c.backupService.CreateBackupWithDatabase(outputPath, snapshotPath)
+}
 
 // GetSettings 获取设置
 func (c *Core) GetSettings() (*database.Settings, error) {

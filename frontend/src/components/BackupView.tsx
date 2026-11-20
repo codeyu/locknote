@@ -9,7 +9,7 @@ interface BackupViewProps {
 }
 
 export function BackupView({ embedded = false }: BackupViewProps) {
-  const { setNotes, setSealedFile } = useStore();
+  const { setNotes, setTags, setNotebooks, setSealedFile } = useStore();
   const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -61,8 +61,14 @@ export function BackupView({ embedded = false }: BackupViewProps) {
 
     try {
       await App.RestoreBackup();
-      const notesList = await App.ListNotes();
+      const [notesList, tagsList, notebooksList] = await Promise.all([
+        App.ListNotes(),
+        App.ListTags(),
+        App.ListNotebooks(),
+      ]);
       setNotes(notesList || []);
+      setTags(tagsList || []);
+      setNotebooks(notebooksList || []);
       setMessage({ type: 'success', text: t.backup.restoreSuccess });
     } catch (error) {
       setMessage({ type: 'error', text: `${t.backup.restoreFailed}：${String(error)}` });
