@@ -190,3 +190,38 @@ func TestSetupRejectsWeakRecoveryKey(t *testing.T) {
 		t.Fatalf("generated key should be accepted: %v", err)
 	}
 }
+
+func TestSystemWakeLocksOnlyWhenEnabled(t *testing.T) {
+	c := newTestCore(t)
+	if _, err := c.SetupPassword("master-pass", "", "K7MQ2X9P4R3WHT6N"); err != nil {
+		t.Fatal(err)
+	}
+	notified := 0
+	c.SetLockCallback(func() { notified++ })
+
+	settings, err := c.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.LockOnSleep = false
+	if err := c.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	c.onSystemWake()
+	if !c.IsUnlocked() || notified != 0 {
+		t.Fatal("must stay unlocked when lock-on-sleep is off")
+	}
+
+	settings.LockOnSleep = true
+	if err := c.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	c.onSystemWake()
+	if c.IsUnlocked() || notified != 1 {
+		t.Fatalf("should lock and notify once (unlocked=%v, notified=%d)", c.IsUnlocked(), notified)
+	}
+	c.onSystemWake()
+	if notified != 1 {
+		t.Fatal("already locked: no second notification")
+	}
+}

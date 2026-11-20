@@ -16,6 +16,7 @@ import (
 	"locknote/internal/notebooks"
 	"locknote/internal/notes"
 	"locknote/internal/quickunlock"
+	"locknote/internal/sleepwatch"
 	"locknote/internal/smartviews"
 	"locknote/internal/tags"
 	"locknote/internal/todos"
@@ -63,6 +64,9 @@ type Core struct {
 
 	// quickUnlock 在内存中保存用 PIN 包裹的 dataKey，程序退出即失效
 	quickUnlock *quickunlock.State
+
+	// sleepWatcher 检测系统睡眠，用于“休眠后锁定”
+	sleepWatcher *sleepwatch.Watcher
 }
 
 // SetupResult 是初始化密码后的返回结果
@@ -115,12 +119,15 @@ func New(dataDir string) (*Core, error) {
 		lastActivity:      time.Now(),
 	}
 	c.quickUnlock = quickunlock.New(c.cryptoService.DeriveKey)
+	c.sleepWatcher = sleepwatch.Start(sleepwatch.DefaultInterval, sleepwatch.DefaultGap, sleepwatch.DefaultStall, c.onSystemWake)
 
 	return c, nil
 }
 
 // Close 关闭 Core，释放资源
 func (c *Core) Close() {
+	// 先停睡眠检测：它的回调会获取 c.mu，不能在持有锁时等待它退出
+	c.sleepWatcher.Stop()
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.quickUnlock.Disarm()
@@ -137,6 +144,26 @@ func (c *Core) SetLockCallback(cb LockCallback) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.lockCallback = cb
+}
+
+// onSystemWake 在检测到系统睡眠后调用：开启了“休眠后锁定”且当前已解锁时，立即锁定。
+func (c *Core) onSystemWake() {
+	settings, err := c.db.GetSettings()
+	if err != nil || !settings.LockOnSleep {
+		return
+	}
+	c.mu.RLock()
+	unlocked := c.isUnlocked
+	cb := c.lockCallback
+	c.mu.RUnlock()
+	if !unlocked {
+		return
+	}
+	log.Printf("[Lock] system sleep detected, locking")
+	c.Lock()
+	if cb != nil {
+		cb()
+	}
 }
 
 // GetDataDir 返回数据目录路径
