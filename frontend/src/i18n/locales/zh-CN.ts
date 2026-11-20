@@ -521,7 +521,7 @@ export const zhCN = {
     copyPassword: '复制密码（30 秒后自动清空剪贴板）',
     generatedPassphraseHint: '已生成 5 个随机单词组成的密码。请务必记住它，或保存到密码管理器；复制后剪贴板会在 30 秒后自动清空。',
     passwordHint: '密码提示（可选）',
-    passwordHintPlaceholder: '帮助你记住密码的提示',
+    passwordHintPlaceholder: '提示以明文保存，锁定时也能看到，不要写密码本身',
     confirmPasswordPlaceholder: '请再次输入密码',
     unlock: '解锁',
     setup: '设置密码',

@@ -523,7 +523,7 @@ export const zhTW: Translations = {
     copyPassword: '複製密碼（30 秒後自動清空剪貼簿）',
     generatedPassphraseHint: '已產生由 5 個隨機單字組成的密碼。請務必記住它，或儲存到密碼管理器；複製後剪貼簿會在 30 秒後自動清空。',
     passwordHint: '密碼提示（可選）',
-    passwordHintPlaceholder: '協助你記住密碼的提示',
+    passwordHintPlaceholder: '提示以明文儲存，鎖定時也看得到，不要寫密碼本身',
     confirmPasswordPlaceholder: '請再次輸入密碼',
     unlock: '解鎖',
     setup: '設定密碼',

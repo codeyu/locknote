@@ -523,7 +523,7 @@ export const enUS: Translations = {
     copyPassword: 'Copy password (clipboard clears after 30 seconds)',
     generatedPassphraseHint: 'A passphrase of 5 random words was generated. Memorize it or save it in a password manager; after copying, the clipboard clears in 30 seconds.',
     passwordHint: 'Password hint (optional)',
-    passwordHintPlaceholder: 'A hint to help you remember',
+    passwordHintPlaceholder: 'Stored unencrypted and shown when locked; never write the password itself',
     confirmPasswordPlaceholder: 'Enter password again',
     unlock: 'Unlock',
     setup: 'Set Password',
