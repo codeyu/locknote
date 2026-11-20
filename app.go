@@ -35,6 +35,10 @@ type App struct {
 	lastMinimized     bool
 	allowClose        atomic.Bool
 	closeRequestStart atomic.Bool
+
+	// 系统通过双击或“打开方式”交给本程序、尚未展示的 .locknote 文件
+	pendingMu     sync.Mutex
+	pendingSealed []string
 }
 
 func NewApp() *App {
@@ -51,10 +55,15 @@ func NewApp() *App {
 			}
 		}
 	}
-	return &App{
+	app := &App{
 		dataDir:   dataDir,
 		coreReady: make(chan struct{}),
 	}
+	// Windows / Linux 双击文件时，文件路径作为命令行参数传入
+	if len(os.Args) > 1 {
+		app.queueSealedFiles(os.Args[1:])
+	}
+	return app
 }
 
 func (a *App) startup(ctx context.Context) {

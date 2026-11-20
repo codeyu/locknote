@@ -37,9 +37,15 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		// 只允许运行一个实例：程序已打开时再双击 .locknote 文件，交给已运行的窗口处理
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "app.locknote.single-instance",
+			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
+		},
 		Mac: &mac.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
+			OnFileOpen:           app.onFileOpen,
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,

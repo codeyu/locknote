@@ -8,6 +8,8 @@ import {tags} from '../models';
 import {todos} from '../models';
 import {database} from '../models';
 import {core} from '../models';
+import {main} from '../models';
+import {sealedfile} from '../models';
 
 export function AddTagToNote(arg1:string,arg2:string):Promise<void>;
 
@@ -18,6 +20,8 @@ export function BatchAddTagToNotes(arg1:Array<string>,arg2:string):Promise<void>
 export function BatchDeleteNotes(arg1:Array<string>):Promise<void>;
 
 export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function ChooseSealedFile():Promise<string>;
 
 export function ConfirmClose():Promise<void>;
 
@@ -87,6 +91,8 @@ export function ImportImage(arg1:string):Promise<attachments.Attachment>;
 
 export function ImportMarkdown():Promise<notes.Note>;
 
+export function ImportSealedFile(arg1:string,arg2:string):Promise<notes.Note>;
+
 export function IsCoreReady():Promise<boolean>;
 
 export function IsFirstRun():Promise<boolean>;
@@ -117,6 +123,10 @@ export function Lock():Promise<void>;
 
 export function MigrateOldNotes():Promise<number>;
 
+export function OpenSealedFile(arg1:string):Promise<main.SealedFileView>;
+
+export function OpenSealedFileWithRecoveryKey(arg1:string,arg2:string):Promise<main.SealedFileView>;
+
 export function RemoveTagFromNote(arg1:string,arg2:string):Promise<void>;
 
 export function ReorderNotebooks(arg1:Array<string>):Promise<void>;
@@ -132,6 +142,8 @@ export function RestoreBackup():Promise<void>;
 export function RestoreNote(arg1:string):Promise<void>;
 
 export function RestoreNoteFromHistory(arg1:string,arg2:string):Promise<notes.Note>;
+
+export function SealTextFile(arg1:boolean):Promise<sealedfile.SealResult>;
 
 export function SearchNotes(arg1:string):Promise<Array<notes.Note>>;
 
@@ -154,6 +166,8 @@ export function SetupPassword(arg1:string,arg2:string,arg3:string):Promise<core.
 export function SoftDeleteAttachment(arg1:string):Promise<void>;
 
 export function SoftDeleteNote(arg1:string):Promise<void>;
+
+export function TakePendingSealedFile():Promise<string>;
 
 export function Unlock(arg1:string):Promise<boolean>;
 

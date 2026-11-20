@@ -14,6 +14,15 @@
     "companyName": "LockNote.app",
     "productName": "LockNote.app",
     "productVersion": "1.1.0",
-    "copyright": "Copyright (c) 2026 LockNote.app"
+    "copyright": "Copyright (c) 2026 LockNote.app",
+    "fileAssociations": [
+      {
+        "ext": "locknote",
+        "name": "LockNote Encrypted Note",
+        "description": "LockNote 加密笔记文件",
+        "iconName": "locknoteFileIcon",
+        "role": "Viewer"
+      }
+    ]
   }
 }

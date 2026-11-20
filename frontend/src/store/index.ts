@@ -31,6 +31,8 @@ interface AppState {
   isMultiSelectMode: boolean;
   expandedNotebooks: Set<string>;
   isNoteListCollapsed: boolean;
+  /** 正在查看的 .locknote 加密文件路径 */
+  sealedFilePath: string | null;
 
   setUnlocked: (unlocked: boolean) => void;
   setFirstRun: (firstRun: boolean) => void;
@@ -61,6 +63,7 @@ interface AppState {
   setMultiSelectMode: (mode: boolean) => void;
   setNoteListCollapsed: (collapsed: boolean) => void;
   toggleNoteListCollapsed: () => void;
+  setSealedFilePath: (path: string | null) => void;
   expandNotebook: (id: string) => void;
   collapseNotebook: (id: string) => void;
   toggleNotebookExpand: (id: string) => void;
@@ -95,6 +98,7 @@ const initialState = {
   isMultiSelectMode: false,
   expandedNotebooks: new Set<string>(),
   isNoteListCollapsed: false,
+  sealedFilePath: null as string | null,
 };
 
 export const useStore = create<AppState>((set, get) => ({
@@ -132,6 +136,7 @@ export const useStore = create<AppState>((set, get) => ({
   setSelectedNote: (note) => set({ selectedNote: note }),
   setSelectedNotebookId: (id) => set({ selectedNotebookId: id, selectedTagId: null }),
   setSelectedTodoId: (id) => set({ selectedTodoId: id }),
+  setSealedFilePath: (path) => set({ sealedFilePath: path }),
   setEditorMode: (mode) => set({ editorMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchResults: (results) => set({ searchResults: results }),

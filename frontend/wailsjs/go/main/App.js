@@ -22,6 +22,10 @@ export function ChangePassword(arg1, arg2, arg3) {
   return window['go']['main']['App']['ChangePassword'](arg1, arg2, arg3);
 }
 
+export function ChooseSealedFile() {
+  return window['go']['main']['App']['ChooseSealedFile']();
+}
+
 export function ConfirmClose() {
   return window['go']['main']['App']['ConfirmClose']();
 }
@@ -158,6 +162,10 @@ export function ImportMarkdown() {
   return window['go']['main']['App']['ImportMarkdown']();
 }
 
+export function ImportSealedFile(arg1, arg2) {
+  return window['go']['main']['App']['ImportSealedFile'](arg1, arg2);
+}
+
 export function IsCoreReady() {
   return window['go']['main']['App']['IsCoreReady']();
 }
@@ -218,6 +226,14 @@ export function MigrateOldNotes() {
   return window['go']['main']['App']['MigrateOldNotes']();
 }
 
+export function OpenSealedFile(arg1) {
+  return window['go']['main']['App']['OpenSealedFile'](arg1);
+}
+
+export function OpenSealedFileWithRecoveryKey(arg1, arg2) {
+  return window['go']['main']['App']['OpenSealedFileWithRecoveryKey'](arg1, arg2);
+}
+
 export function RemoveTagFromNote(arg1, arg2) {
   return window['go']['main']['App']['RemoveTagFromNote'](arg1, arg2);
 }
@@ -248,6 +264,10 @@ export function RestoreNote(arg1) {
 
 export function RestoreNoteFromHistory(arg1, arg2) {
   return window['go']['main']['App']['RestoreNoteFromHistory'](arg1, arg2);
+}
+
+export function SealTextFile(arg1) {
+  return window['go']['main']['App']['SealTextFile'](arg1);
 }
 
 export function SearchNotes(arg1) {
@@ -292,6 +312,10 @@ export function SoftDeleteAttachment(arg1) {
 
 export function SoftDeleteNote(arg1) {
   return window['go']['main']['App']['SoftDeleteNote'](arg1);
+}
+
+export function TakePendingSealedFile() {
+  return window['go']['main']['App']['TakePendingSealedFile']();
 }
 
 export function Unlock(arg1) {

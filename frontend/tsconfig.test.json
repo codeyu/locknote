@@ -30,6 +30,8 @@
     "src/editorFlush.ts",
     "src/recoveryKey.test.ts",
     "src/recoveryKey.ts",
+    "src/sealedFile.test.ts",
+    "src/sealedFile.ts",
     "src/mainLayoutLoadRace.test.ts",
     "src/markdownLinks.test.ts",
     "src/contextMenuPolicy.test.ts",
