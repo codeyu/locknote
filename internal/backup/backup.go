@@ -55,13 +55,20 @@ func NewService(dataDir string) *Service {
 
 func skippedBackupPath(name string) bool {
 	name = filepath.ToSlash(filepath.Clean(name))
+	if name == DatabaseSnapshotEntry {
+		// 数据库快照允许出现在 zip 里并被解压，但不会作为普通文件复制回数据目录
+		return false
+	}
 	if sensitiveFiles[filepath.Base(name)] {
 		return true
 	}
-	if name == "database" || strings.HasPrefix(name, "database/") {
-		return true
-	}
 	return name == "restore-snapshots" || strings.HasPrefix(name, "restore-snapshots/")
+}
+
+// isDatabaseSnapshotPath 判断解压出的文件是否属于数据库快照目录（恢复时不复制到数据目录）。
+func isDatabaseSnapshotPath(name string) bool {
+	name = filepath.ToSlash(filepath.Clean(name))
+	return name == "database" || strings.HasPrefix(name, "database/")
 }
 
 func safeZipDestination(root, name string) (string, string, bool) {
@@ -255,7 +262,7 @@ func (s *Service) CreateBackupWithDatabase(outputPath, dbSnapshotPath string) (e
 			}
 			return nil
 		}
-		if skippedBackupPath(relPath) {
+		if skippedBackupPath(relPath) || isDatabaseSnapshotPath(relPath) {
 			return nil
 		}
 
@@ -379,7 +386,7 @@ func (s *Service) RestoreBackupWithDatabase(inputPath string, cryptoService *cry
 		if err != nil {
 			return err
 		}
-		if skippedBackupPath(relPath) {
+		if skippedBackupPath(relPath) || isDatabaseSnapshotPath(relPath) {
 			return nil
 		}
 		destination := filepath.Join(s.dataDir, relPath)
