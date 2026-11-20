@@ -12,6 +12,7 @@ import { TodoWorkspace } from './TodoWorkspace';
 import { ImageManager } from './ImageManager';
 import { CalendarView } from './CalendarView';
 import { SealedFileViewer } from './SealedFileViewer';
+import { FileDropImporter } from './FileDropImporter';
 import * as App from '../../wailsjs/go/main/App';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 
@@ -31,7 +32,7 @@ export function MainLayout() {
     toggleNoteListCollapsed,
     undecryptableNotes,
     setUndecryptableNotes,
-    setSealedFilePath,
+    setSealedFile,
   } = useStore();
 
   useEffect(() => {
@@ -59,10 +60,10 @@ export function MainLayout() {
   // 双击 / “打开方式”传入的 .locknote 文件：解锁后（本组件挂载时）以及运行中收到通知时打开
   useEffect(() => {
     const openPendingSealedFile = async () => {
-      if (useStore.getState().sealedFilePath) return;
+      if (useStore.getState().sealedFile) return;
       try {
         const path = await App.TakePendingSealedFile();
-        if (path) setSealedFilePath(path);
+        if (path) setSealedFile({ kind: 'path', path });
       } catch (error) {
         console.error('Failed to take pending sealed file:', error);
       }
@@ -74,7 +75,7 @@ export function MainLayout() {
     return () => {
       offPending();
     };
-  }, [setSealedFilePath]);
+  }, [setSealedFile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -167,6 +168,7 @@ export function MainLayout() {
       </main>
       {isCommandPaletteOpen && <CommandPalette />}
       <SealedFileViewer />
+      <FileDropImporter />
     </div>
   );
 }

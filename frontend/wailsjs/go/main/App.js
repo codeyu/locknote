@@ -174,6 +174,10 @@ export function ImportSealedFile(arg1, arg2) {
   return window['go']['main']['App']['ImportSealedFile'](arg1, arg2);
 }
 
+export function ImportSealedFileData(arg1, arg2) {
+  return window['go']['main']['App']['ImportSealedFileData'](arg1, arg2);
+}
+
 export function IsCoreReady() {
   return window['go']['main']['App']['IsCoreReady']();
 }
@@ -240,6 +244,10 @@ export function MigrateOldNotes() {
 
 export function OpenSealedFile(arg1) {
   return window['go']['main']['App']['OpenSealedFile'](arg1);
+}
+
+export function OpenSealedFileData(arg1, arg2, arg3) {
+  return window['go']['main']['App']['OpenSealedFileData'](arg1, arg2, arg3);
 }
 
 export function OpenSealedFileWithRecoveryKey(arg1, arg2) {

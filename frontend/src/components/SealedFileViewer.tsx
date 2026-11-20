@@ -4,15 +4,25 @@ import { useStore } from '../store';
 import { formatMessage, useI18n } from '../i18n';
 import * as App from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
-import { formatSealedAt, isWrongVaultError } from '../sealedFile';
+import { formatSealedAt, isWrongVaultError, type SealedFileSource } from '../sealedFile';
 
 /**
  * 只读查看 .locknote 加密文件。
- * 由 store.sealedFilePath 驱动：设置路径即打开，关闭时清空内容并取下一个待打开的文件。
+ * 由 store.sealedFile 驱动：可以是文件路径，也可以是拖入窗口的文件内容。
+ * 关闭时清空内容并取下一个待打开的文件。
  * 应用锁定时 MainLayout 卸载、store 重置，解密内容随之丢弃。
  */
+function openSource(source: SealedFileSource, recoveryKey: string): Promise<main.SealedFileView> {
+  if (source.kind === 'data') {
+    return App.OpenSealedFileData(source.name, source.data, recoveryKey);
+  }
+  return recoveryKey
+    ? App.OpenSealedFileWithRecoveryKey(source.path, recoveryKey)
+    : App.OpenSealedFile(source.path);
+}
+
 export function SealedFileViewer() {
-  const { sealedFilePath, setSealedFilePath, setNotes } = useStore();
+  const { sealedFile, setSealedFile, setNotes } = useStore();
   const { t, language } = useI18n();
   const [view, setView] = useState<main.SealedFileView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +41,11 @@ export function SealedFileViewer() {
     setUsedRecoveryKey('');
     setNotice(null);
     setCopied(false);
-    if (!sealedFilePath) return;
+    if (!sealedFile) return;
 
     let cancelled = false;
     setBusy(true);
-    App.OpenSealedFile(sealedFilePath)
+    openSource(sealedFile, '')
       .then((result) => {
         if (!cancelled) setView(result);
       })
@@ -50,7 +60,7 @@ export function SealedFileViewer() {
     return () => {
       cancelled = true;
     };
-  }, [sealedFilePath]);
+  }, [sealedFile]);
 
   const close = async () => {
     setView(null);
@@ -62,19 +72,19 @@ export function SealedFileViewer() {
     } catch {
       next = '';
     }
-    setSealedFilePath(next || null);
+    setSealedFile(next ? { kind: 'path', path: next } : null);
   };
 
   useEffect(() => {
-    if (!sealedFilePath) return;
+    if (!sealedFile) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') void close();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sealedFilePath]);
+  }, [sealedFile]);
 
-  if (!sealedFilePath) return null;
+  if (!sealedFile) return null;
 
   const handleOpenWithKey = async () => {
     const key = recoveryKey.trim();
@@ -82,7 +92,7 @@ export function SealedFileViewer() {
     setBusy(true);
     setError(null);
     try {
-      const result = await App.OpenSealedFileWithRecoveryKey(sealedFilePath, key);
+      const result = await openSource(sealedFile, key);
       setView(result);
       setUsedRecoveryKey(key);
       setWrongVault(false);
@@ -109,7 +119,10 @@ export function SealedFileViewer() {
     setBusy(true);
     setError(null);
     try {
-      const note = await App.ImportSealedFile(sealedFilePath, usedRecoveryKey);
+      const note =
+        sealedFile.kind === 'path'
+          ? await App.ImportSealedFile(sealedFile.path, usedRecoveryKey)
+          : await App.ImportSealedFileData(sealedFile.data, usedRecoveryKey);
       const notesList = await App.ListNotes();
       setNotes(notesList || []);
       setNotice(formatMessage(t.sealed.imported, { title: note.title }));

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -116,6 +118,69 @@ func (a *App) ImportSealedFile(path, recoveryKey string) (*notes.Note, error) {
 		doc, err = c.OpenSealedFile(path)
 	} else {
 		doc, err = c.OpenSealedFileWithRecoveryKey(path, recoveryKey)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return c.ImportSealedDocument(doc)
+}
+
+// maxSealedDataBase64 限制前端传入的 base64 数据大小（约 48 MB 原始数据）。
+const maxSealedDataBase64 = 64 << 20
+
+func decodeSealedData(dataBase64 string) ([]byte, error) {
+	if len(dataBase64) > maxSealedDataBase64 {
+		return nil, sealedfile.ErrNotSealedFile
+	}
+	data, err := base64.StdEncoding.DecodeString(dataBase64)
+	if err != nil {
+		return nil, errors.New("无法读取文件内容")
+	}
+	return data, nil
+}
+
+// OpenSealedFileData 解密拖入窗口的 .locknote 文件（WebView 拿不到文件路径，只能传内容）。
+// recoveryKey 为空时使用当前密码库的密钥。
+func (a *App) OpenSealedFileData(fileName, dataBase64, recoveryKey string) (*SealedFileView, error) {
+	c, err := a.coreOrErr()
+	if err != nil {
+		return nil, err
+	}
+	a.UpdateActivity()
+	data, err := decodeSealedData(dataBase64)
+	if err != nil {
+		return nil, err
+	}
+	var doc *sealedfile.Document
+	if strings.TrimSpace(recoveryKey) == "" {
+		doc, err = c.OpenSealedData(data)
+	} else {
+		doc, err = c.OpenSealedDataWithRecoveryKey(data, recoveryKey)
+	}
+	if err != nil {
+		return nil, err
+	}
+	view := newSealedFileView("", doc)
+	view.FileName = filepath.Base(fileName)
+	return view, nil
+}
+
+// ImportSealedFileData 把拖入的 .locknote 文件内容存为新笔记。
+func (a *App) ImportSealedFileData(dataBase64, recoveryKey string) (*notes.Note, error) {
+	c, err := a.coreOrErr()
+	if err != nil {
+		return nil, err
+	}
+	a.UpdateActivity()
+	data, err := decodeSealedData(dataBase64)
+	if err != nil {
+		return nil, err
+	}
+	var doc *sealedfile.Document
+	if strings.TrimSpace(recoveryKey) == "" {
+		doc, err = c.OpenSealedData(data)
+	} else {
+		doc, err = c.OpenSealedDataWithRecoveryKey(data, recoveryKey)
 	}
 	if err != nil {
 		return nil, err

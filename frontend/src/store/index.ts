@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { notes, tags, database, notebooks } from '../../wailsjs/go/models';
+import type { SealedFileSource } from '../sealedFile';
 
 export type ViewType = 'notes' | 'search' | 'settings' | 'recent' | 'todos' | 'images' | 'calendar';
 export type EditorMode = 'edit' | 'preview' | 'split';
@@ -31,8 +32,8 @@ interface AppState {
   isMultiSelectMode: boolean;
   expandedNotebooks: Set<string>;
   isNoteListCollapsed: boolean;
-  /** 正在查看的 .locknote 加密文件路径 */
-  sealedFilePath: string | null;
+  /** 正在查看的 .locknote 加密文件 */
+  sealedFile: SealedFileSource | null;
 
   setUnlocked: (unlocked: boolean) => void;
   setFirstRun: (firstRun: boolean) => void;
@@ -63,7 +64,7 @@ interface AppState {
   setMultiSelectMode: (mode: boolean) => void;
   setNoteListCollapsed: (collapsed: boolean) => void;
   toggleNoteListCollapsed: () => void;
-  setSealedFilePath: (path: string | null) => void;
+  setSealedFile: (source: SealedFileSource | null) => void;
   expandNotebook: (id: string) => void;
   collapseNotebook: (id: string) => void;
   toggleNotebookExpand: (id: string) => void;
@@ -98,7 +99,7 @@ const initialState = {
   isMultiSelectMode: false,
   expandedNotebooks: new Set<string>(),
   isNoteListCollapsed: false,
-  sealedFilePath: null as string | null,
+  sealedFile: null as SealedFileSource | null,
 };
 
 export const useStore = create<AppState>((set, get) => ({
@@ -136,7 +137,7 @@ export const useStore = create<AppState>((set, get) => ({
   setSelectedNote: (note) => set({ selectedNote: note }),
   setSelectedNotebookId: (id) => set({ selectedNotebookId: id, selectedTagId: null }),
   setSelectedTodoId: (id) => set({ selectedTodoId: id }),
-  setSealedFilePath: (path) => set({ sealedFilePath: path }),
+  setSealedFile: (source) => set({ sealedFile: source }),
   setEditorMode: (mode) => set({ editorMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchResults: (results) => set({ searchResults: results }),

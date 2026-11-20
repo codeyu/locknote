@@ -97,6 +97,8 @@ export function ImportMarkdown():Promise<notes.Note>;
 
 export function ImportSealedFile(arg1:string,arg2:string):Promise<notes.Note>;
 
+export function ImportSealedFileData(arg1:string,arg2:string):Promise<notes.Note>;
+
 export function IsCoreReady():Promise<boolean>;
 
 export function IsFirstRun():Promise<boolean>;
@@ -130,6 +132,8 @@ export function Lock():Promise<void>;
 export function MigrateOldNotes():Promise<number>;
 
 export function OpenSealedFile(arg1:string):Promise<main.SealedFileView>;
+
+export function OpenSealedFileData(arg1:string,arg2:string,arg3:string):Promise<main.SealedFileView>;
 
 export function OpenSealedFileWithRecoveryKey(arg1:string,arg2:string):Promise<main.SealedFileView>;
 

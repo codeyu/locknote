@@ -9,7 +9,7 @@ interface BackupViewProps {
 }
 
 export function BackupView({ embedded = false }: BackupViewProps) {
-  const { setNotes, setSealedFilePath } = useStore();
+  const { setNotes, setSealedFile } = useStore();
   const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -142,7 +142,7 @@ export function BackupView({ embedded = false }: BackupViewProps) {
     setMessage(null);
     try {
       const path = await App.ChooseSealedFile();
-      if (path) setSealedFilePath(path);
+      if (path) setSealedFile({ kind: 'path', path });
     } catch (error) {
       setMessage({ type: 'error', text: `${t.sealed.openFailed}：${String(error)}` });
     }

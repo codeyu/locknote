@@ -39,23 +39,37 @@ func (c *Core) SealTextFile(path string, removeOriginal bool) (*sealedfile.SealR
 
 // OpenSealedFile 用当前密码库的 dataKey 解密 .locknote 文件。
 func (c *Core) OpenSealedFile(path string) (*sealedfile.Document, error) {
+	data, err := sealedfile.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return c.OpenSealedData(data)
+}
+
+// OpenSealedData 用当前密码库的 dataKey 解密 .locknote 文件内容（例如拖入窗口的文件）。
+func (c *Core) OpenSealedData(data []byte) (*sealedfile.Document, error) {
 	key, err := c.vaultKeyCopy()
 	if err != nil {
 		return nil, err
 	}
 	defer wipe(key)
-	return sealedfile.OpenFile(key, path)
+	return sealedfile.Open(key, data)
 }
 
 // OpenSealedFileWithRecoveryKey 用恢复密钥解密 .locknote 文件，
 // 用于打开由另一个密码库（同一恢复密钥）加密的文件。
 func (c *Core) OpenSealedFileWithRecoveryKey(path, displayKey string) (*sealedfile.Document, error) {
-	if !c.IsUnlocked() {
-		return nil, errVaultLocked
-	}
 	data, err := sealedfile.ReadFile(path)
 	if err != nil {
 		return nil, err
+	}
+	return c.OpenSealedDataWithRecoveryKey(data, displayKey)
+}
+
+// OpenSealedDataWithRecoveryKey 用恢复密钥解密 .locknote 文件内容。
+func (c *Core) OpenSealedDataWithRecoveryKey(data []byte, displayKey string) (*sealedfile.Document, error) {
+	if !c.IsUnlocked() {
+		return nil, errVaultLocked
 	}
 	candidates := c.cryptoService.DataKeyCandidates(displayKey)
 	defer func() {

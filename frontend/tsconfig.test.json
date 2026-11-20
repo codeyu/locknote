@@ -35,6 +35,8 @@
     "src/passphrase.ts",
     "src/pinUnlock.test.ts",
     "src/pinUnlock.ts",
+    "src/textFileImport.test.ts",
+    "src/textFileImport.ts",
     "src/sealedFile.ts",
     "src/mainLayoutLoadRace.test.ts",
     "src/markdownLinks.test.ts",

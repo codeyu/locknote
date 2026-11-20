@@ -34,3 +34,8 @@ export function baseName(path: string): string {
   const parts = path.split(/[\\/]/);
   return parts[parts.length - 1] || path;
 }
+
+/** 要在查看器中打开的 .locknote：本地路径（双击、选择文件）或拖入窗口的文件内容（base64）。 */
+export type SealedFileSource =
+  | { kind: 'path'; path: string }
+  | { kind: 'data'; name: string; data: string };

@@ -1259,6 +1259,26 @@ export function NoteEditor({
     encodingTriggerRef.current?.focus();
   };
 
+  const handleCreateNoteFromDroppedText = async () => {
+    if (!pendingTextFile || pendingTextFile.decodeError) return;
+    const fallbackTitle = pendingTextFile.name.replace(/\.[^.]+$/, '').trim() || pendingTextFile.name;
+    const importedTitle = getDroppedTextTitle(pendingTextFile.content, MAX_TITLE_LENGTH) || fallbackTitle.slice(0, MAX_TITLE_LENGTH);
+    try {
+      const created = await App.CreateNote(importedTitle, pendingTextFile.content);
+      setPendingTextFile(null);
+      setEncodingMenuOpen(false);
+      const updatedNotes = await App.ListNotes();
+      const safeNotes = updatedNotes || [];
+      setNotes(safeNotes);
+      onNotesReloaded?.(safeNotes);
+      updateSelectedNote(created);
+      setEditorMode('edit');
+    } catch (error) {
+      console.error('Failed to create note from dropped file:', error);
+      alert(`${t.common.error}：${String(error)}`);
+    }
+  };
+
   const handleConfirmDroppedText = () => {
     if (!pendingTextFile || pendingTextFile.decodeError || selectedNote?.id !== pendingTextFile.noteId) return;
     pushUndoSnapshot();
@@ -1641,6 +1661,7 @@ export function NoteEditor({
                 onKeyDown={handleContentKeyDown}
                 onPaste={handleContentPaste}
                 onDrop={handleContentDrop}
+                data-file-drop-zone="editor"
                 onScroll={handleContentScroll}
                 onDragOver={(event) => event.preventDefault()}
                 className={`min-w-0 flex-1 resize-none py-4 pr-6 focus:outline-none font-mono leading-relaxed ${showLineNumbers ? 'pl-4' : 'px-6'}`}
@@ -2126,7 +2147,6 @@ export function NoteEditor({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                autoFocus
                 className="rounded border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
                 onClick={() => setPendingTextFile(null)}
               >
@@ -2134,11 +2154,20 @@ export function NoteEditor({
               </button>
               <button
                 type="button"
-                className="rounded bg-accent px-3 py-2 text-sm text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={pendingTextFile.decodeError}
                 onClick={handleConfirmDroppedText}
               >
                 {t.editor.dropReplaceContent}
+              </button>
+              <button
+                type="button"
+                autoFocus
+                className="rounded bg-accent px-3 py-2 text-sm text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={pendingTextFile.decodeError}
+                onClick={() => void handleCreateNoteFromDroppedText()}
+              >
+                {t.editor.dropCreateNote}
               </button>
             </div>
           </div>

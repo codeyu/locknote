@@ -380,6 +380,7 @@ export function ImageManager() {
       <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
         <div
           onDrop={handleDrop}
+          data-file-drop-zone="images"
           onDragOver={(event) => event.preventDefault()}
           onDragEnter={() => setDragActive(true)}
           onDragLeave={() => setDragActive(false)}
