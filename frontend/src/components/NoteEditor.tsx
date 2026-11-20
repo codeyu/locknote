@@ -1,6 +1,6 @@
 import { indexMarkdownHeadings } from '../markdownHeadings';
 import { useId, useState, useLayoutEffect, useEffect, useCallback, useRef, type ClipboardEvent as ReactClipboardEvent, type DragEvent as ReactDragEvent, type ImgHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode, type ComponentProps, type UIEvent as ReactUIEvent } from 'react';
-import { Eye, Edit3, Columns, Tag, History, Download, X, Plus, Check, ZoomIn, ZoomOut, ChevronUp, ChevronDown, Bold, Italic, Heading1, Heading2, List, ListOrdered, Quote, Code, Link2, Image as ImageIcon, Pilcrow, Copy, Scissors, Clipboard, ListTree, PanelRightClose } from 'lucide-react';
+import { Eye, Edit3, Columns, Tag, History, Download, X, Plus, Check, ZoomIn, ZoomOut, ChevronUp, ChevronDown, Bold, Italic, Heading1, Heading2, List, ListOrdered, Quote, Code, Link2, Image as ImageIcon, Pilcrow, Copy, Scissors, Clipboard, ListTree, PanelRightClose, FileText, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Components, ExtraProps } from 'react-markdown';
 import { MermaidDiagram } from './MermaidDiagram';
@@ -368,6 +368,8 @@ export function NoteEditor({
   const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null);
   const [pendingTextFile, setPendingTextFile] = useState<PendingTextFile | null>(null);
   const [encodingMenuOpen, setEncodingMenuOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuContainerRef = useRef<HTMLDivElement>(null);
   const [fontScale, setFontScale] = useState(1);
   const [showMarkdownToolbar, setShowMarkdownToolbar] = useState(false);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
@@ -843,10 +845,50 @@ export function NoteEditor({
     }
   };
 
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (exportMenuContainerRef.current?.contains(event.target as Node)) return;
+      setShowExportMenu(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowExportMenu(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showExportMenu]);
+
+  const handleExportSealed = async () => {
+    setShowExportMenu(false);
+    if (!selectedNote) return;
+    try {
+      // 先保存正在编辑的内容，确保导出的是最新版本
+      await flushPendingSave();
+      const result = await App.ExportNoteAsLockNote(selectedNote.id);
+      if (result) {
+        const omitted = result.omittedImages > 0
+          ? `\n${formatMessage(t.editor.exportSealedImagesOmitted, { count: result.omittedImages })}`
+          : '';
+        alert(`${t.common.success}：${result.path}${omitted}`);
+      }
+    } catch (error) {
+      console.error('Failed to export encrypted note:', error);
+      alert(`${t.common.error}：${String(error)}`);
+    }
+  };
+
   const handleExport = async () => {
+    setShowExportMenu(false);
     if (!selectedNote) return;
 
     try {
+      await flushPendingSave();
       const path = await App.ExportNoteAsMarkdown(selectedNote.id);
       if (path) {
         alert(`${t.common.success}：${path}`);
@@ -987,6 +1029,11 @@ export function NoteEditor({
   const handleExportFromContextMenu = () => {
     setContextMenu(null);
     handleExport();
+  };
+
+  const handleExportSealedFromContextMenu = () => {
+    setContextMenu(null);
+    void handleExportSealed();
   };
 
   const handleZoomIn = () => {
@@ -1577,14 +1624,47 @@ export function NoteEditor({
             <History className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={handleExport}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-            title={t.editor.exportTooltip}
-            aria-label={t.editor.exportTooltip}
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <div className="relative" ref={exportMenuContainerRef}>
+            <button
+              onClick={() => setShowExportMenu((open) => !open)}
+              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+              title={t.editor.exportTooltip}
+              aria-label={t.editor.exportTooltip}
+              aria-haspopup="menu"
+              aria-expanded={showExportMenu}
+            >
+              <Download className="w-4 h-4" />
+            </button>
+
+            {showExportMenu && (
+              <div role="menu" className="absolute right-0 top-10 z-20 w-72 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void handleExport()}
+                  className="flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-gray-50"
+                >
+                  <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-800">{t.editor.exportMarkdownItem}</span>
+                    <span className="mt-0.5 block text-xs text-gray-500">{t.editor.exportMarkdownItemDesc}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void handleExportSealed()}
+                  className="flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-gray-50"
+                >
+                  <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-800">{t.editor.exportSealedItem}</span>
+                    <span className="mt-0.5 block text-xs text-gray-500">{t.editor.exportSealedItemDesc}</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
         </div>
       </div>
@@ -1799,6 +1879,12 @@ export function NoteEditor({
               >
                 {t.editor.contextExportMd}
               </ContextMenuButton>
+              <ContextMenuButton
+                icon={<Lock className="h-4 w-4 text-gray-400" />}
+                onClick={handleExportSealedFromContextMenu}
+              >
+                {t.editor.contextExportSealed}
+              </ContextMenuButton>
             </>
           ) : (
             <>
@@ -1826,6 +1912,12 @@ export function NoteEditor({
                 onClick={handleExportFromContextMenu}
               >
                 {t.editor.contextExportMd}
+              </ContextMenuButton>
+              <ContextMenuButton
+                icon={<Lock className="h-4 w-4 text-gray-400" />}
+                onClick={handleExportSealedFromContextMenu}
+              >
+                {t.editor.contextExportSealed}
               </ContextMenuButton>
             </>
           )}

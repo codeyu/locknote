@@ -106,6 +106,10 @@ export function ExportDiagramSVG(arg1) {
   return window['go']['main']['App']['ExportDiagramSVG'](arg1);
 }
 
+export function ExportNoteAsLockNote(arg1) {
+  return window['go']['main']['App']['ExportNoteAsLockNote'](arg1);
+}
+
 export function ExportNoteAsMarkdown(arg1) {
   return window['go']['main']['App']['ExportNoteAsMarkdown'](arg1);
 }

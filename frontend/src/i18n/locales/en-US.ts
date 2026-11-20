@@ -169,6 +169,12 @@ export const enUS: Translations = {
     contextCopyMarkdown: 'Copy Markdown',
     contextShowHistory: 'Version history',
     contextExportMd: 'Export MD file',
+    contextExportSealed: 'Encrypted export',
+    exportMarkdownItem: 'Export Markdown',
+    exportMarkdownItemDesc: 'Plain .md file, images exported alongside',
+    exportSealedItem: 'Encrypted export (.locknote)',
+    exportSealedItemDesc: 'Only your LockNote can open it; images not included',
+    exportSealedImagesOmitted: 'Note: {count} image(s) in this note were not included in the encrypted file.',
     diagram: {
       chart: 'Diagram',
       code: 'Code',

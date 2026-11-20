@@ -93,3 +93,22 @@ func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, erro
 	}
 	return c.noteService.Create(doc.Title, doc.Content)
 }
+
+// ExportNoteSealed 把一篇笔记加密导出为 .locknote 文件（只含标题和正文，不含图片附件）。
+func (c *Core) ExportNoteSealed(noteID, outPath string) error {
+	note, err := c.noteService.Get(noteID)
+	if err != nil {
+		return err
+	}
+	key, err := c.vaultKeyCopy()
+	if err != nil {
+		return err
+	}
+	defer wipe(key)
+	doc := sealedfile.Document{
+		Title:    note.Title,
+		Content:  note.Content,
+		SealedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	return sealedfile.WriteDocument(key, doc, outPath)
+}

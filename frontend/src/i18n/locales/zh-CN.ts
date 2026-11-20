@@ -167,6 +167,12 @@ export const zhCN = {
     contextCopyMarkdown: '复制 Markdown',
     contextShowHistory: '历史版本',
     contextExportMd: '导出md文件',
+    contextExportSealed: '加密导出',
+    exportMarkdownItem: '导出 Markdown',
+    exportMarkdownItemDesc: '明文 .md 文件，图片一起导出',
+    exportSealedItem: '加密导出（.locknote）',
+    exportSealedItemDesc: '只有你的 LockNote 能打开，不含图片',
+    exportSealedImagesOmitted: '注意：笔记里的 {count} 张图片没有包含在加密文件中。',
     diagram: {
       chart: '图表',
       code: '代码',

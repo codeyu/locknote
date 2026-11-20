@@ -169,6 +169,12 @@ export const zhTW: Translations = {
     contextCopyMarkdown: '複製 Markdown',
     contextShowHistory: '歷史版本',
     contextExportMd: '匯出md檔案',
+    contextExportSealed: '加密匯出',
+    exportMarkdownItem: '匯出 Markdown',
+    exportMarkdownItemDesc: '明文 .md 檔案，圖片一起匯出',
+    exportSealedItem: '加密匯出（.locknote）',
+    exportSealedItemDesc: '只有你的 LockNote 能開啟，不含圖片',
+    exportSealedImagesOmitted: '注意：筆記裡的 {count} 張圖片沒有包含在加密檔案中。',
     diagram: {
       chart: '圖表',
       code: '程式碼',

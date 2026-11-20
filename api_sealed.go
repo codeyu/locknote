@@ -188,6 +188,47 @@ func (a *App) ImportSealedFileData(dataBase64, recoveryKey string) (*notes.Note,
 	return c.ImportSealedDocument(doc)
 }
 
+// SealedExportResult 是加密导出笔记的结果。
+type SealedExportResult struct {
+	Path string `json:"path"`
+	// OmittedImages 是笔记中引用、但没有包含进加密文件的图片数量。
+	OmittedImages int `json:"omittedImages"`
+}
+
+// ExportNoteAsLockNote 把当前笔记加密导出为 .locknote 文件。用户取消时返回 nil, nil。
+func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
+	c, err := a.coreOrErr()
+	if err != nil {
+		return nil, err
+	}
+	a.UpdateActivity()
+
+	note, err := c.Notes().Get(noteID)
+	if err != nil {
+		return nil, err
+	}
+	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "加密导出笔记",
+		DefaultFilename: sanitizeFileName(note.Title) + sealedfile.Extension,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "LockNote 加密文件 (*.locknote)", Pattern: "*.locknote"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if savePath == "" {
+		return nil, nil
+	}
+	if !isSealedFilePath(savePath) {
+		savePath += sealedfile.Extension
+	}
+	if err := c.ExportNoteSealed(noteID, savePath); err != nil {
+		return nil, err
+	}
+	return &SealedExportResult{Path: savePath, OmittedImages: len(collectAttachmentIDs(note.Content))}, nil
+}
+
 // ============ 双击 / “打开方式” 传入的 .locknote 文件 ============
 
 // queueSealedFiles 记录系统交给本程序打开的 .locknote 文件，等前端解锁后取走。

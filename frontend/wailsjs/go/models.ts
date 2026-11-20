@@ -79,6 +79,21 @@ export namespace database {
 
 export namespace main {
 	
+	export class SealedExportResult {
+	    path: string;
+	    omittedImages: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SealedExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.omittedImages = source["omittedImages"];
+	    }
+	}
+	
 	export class SealedFileView {
 	    path: string;
 	    fileName: string;

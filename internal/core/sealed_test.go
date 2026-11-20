@@ -51,3 +51,22 @@ func TestSealAndOpenThroughCore(t *testing.T) {
 		t.Fatal("opening while locked should fail")
 	}
 }
+
+func TestExportNoteSealed(t *testing.T) {
+	c := newTestCore(t)
+	if _, err := c.SetupPassword("master-pass", "", "ABCDEFGHJKMNPQRS"); err != nil {
+		t.Fatal(err)
+	}
+	note, err := c.Notes().Create("账号", "user: alice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "账号.locknote")
+	if err := c.ExportNoteSealed(note.ID, out); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := c.OpenSealedFile(out)
+	if err != nil || doc.Title != "账号" || doc.Content != "user: alice" {
+		t.Fatalf("exported doc = %+v, %v", doc, err)
+	}
+}
