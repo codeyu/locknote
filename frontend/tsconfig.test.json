@@ -31,6 +31,8 @@
     "src/recoveryKey.test.ts",
     "src/recoveryKey.ts",
     "src/sealedFile.test.ts",
+    "src/passphrase.test.ts",
+    "src/passphrase.ts",
     "src/sealedFile.ts",
     "src/mainLayoutLoadRace.test.ts",
     "src/markdownLinks.test.ts",

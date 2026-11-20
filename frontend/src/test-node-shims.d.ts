@@ -19,3 +19,11 @@ declare module 'node:assert/strict' {
 declare module 'node:fs' {
   export function readFileSync(path: string, encoding: 'utf8'): string;
 }
+
+declare module 'node:crypto' {
+  interface Hash {
+    update(data: string): Hash;
+    digest(encoding: 'hex'): string;
+  }
+  export function createHash(algorithm: string): Hash;
+}

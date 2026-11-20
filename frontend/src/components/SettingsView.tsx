@@ -7,6 +7,7 @@ import { BackupView } from './BackupView';
 import { TrashView } from './TrashView';
 import * as App from '../../wailsjs/go/main/App';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
+import { MIN_PASSWORD_LENGTH } from '../passphrase';
 
 type SettingsTab = 'settings' | 'backup' | 'trash';
 
@@ -131,7 +132,7 @@ export function SettingsView() {
   const handleChangePassword = async () => {
     setMessage(null);
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       setMessage({ type: 'error', text: t.settings.passwordMinLength });
       return;
     }

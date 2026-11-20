@@ -158,3 +158,19 @@ func TestSetupPasswordRejectsShortRecoveryKey(t *testing.T) {
 		t.Fatalf("IsFirstRun() = %v, %v; want true, nil", firstRun, err)
 	}
 }
+
+func TestPasswordMinimumLengthIsEight(t *testing.T) {
+	c := newTestCore(t)
+	if _, err := c.SetupPassword("seven77", "", "ABCDEFGHJKMNPQRS"); err == nil {
+		t.Fatal("expected a 7-character password to be rejected")
+	}
+	if _, err := c.SetupPassword("eight888", "", "ABCDEFGHJKMNPQRS"); err != nil {
+		t.Fatalf("expected an 8-character password to be accepted: %v", err)
+	}
+	if err := c.ChangePassword("eight888", "short77", ""); err == nil {
+		t.Fatal("expected ChangePassword to reject a 7-character password")
+	}
+	if err := c.ResetPasswordWithDataKey("ABCDEFGHJKMNPQRS", "short77", ""); err == nil {
+		t.Fatal("expected ResetPasswordWithDataKey to reject a 7-character password")
+	}
+}

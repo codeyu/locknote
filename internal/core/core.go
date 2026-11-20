@@ -25,9 +25,9 @@ import (
 )
 
 const dataKeyVerifierPlaintext = "LOCKNOTE_DATAKEY_VERIFY_V1"
-const minPasswordLength = 6
+const minPasswordLength = 8
 
-var errPasswordTooShort = errors.New("密码长度不能少于6个字符")
+var errPasswordTooShort = errors.New("密码长度不能少于8个字符")
 
 // LockCallback 是锁定时的回调函数类型，用于通知上层（如桌面端发送事件）
 type LockCallback func()

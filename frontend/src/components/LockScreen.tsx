@@ -4,6 +4,7 @@ import { useStore } from '../store';
 import { useI18n } from '../i18n';
 import appIcon from '../assets/app-icon.png';
 import * as App from '../../wailsjs/go/main/App';
+import { MIN_PASSWORD_LENGTH } from '../passphrase';
 
 type Mode = 'unlock' | 'forgot' | 'reset';
 
@@ -55,7 +56,7 @@ export function LockScreen() {
   const handleResetPassword = async () => {
     setError('');
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       setError(t.settings.passwordMinLength);
       return;
     }
