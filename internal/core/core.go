@@ -12,6 +12,7 @@ import (
 	"locknote/internal/crypto"
 	"locknote/internal/database"
 	"locknote/internal/fsutil"
+	"locknote/internal/keypolicy"
 	"locknote/internal/notebooks"
 	"locknote/internal/notes"
 	"locknote/internal/quickunlock"
@@ -29,6 +30,8 @@ const dataKeyVerifierPlaintext = "LOCKNOTE_DATAKEY_VERIFY_V1"
 const minPasswordLength = 8
 
 var errPasswordTooShort = errors.New("密码长度不能少于8个字符")
+
+var errWeakRecoveryKey = errors.New("恢复密钥太容易被猜到（重复或连续的字符太多），请点击随机生成")
 
 // LockCallback 是锁定时的回调函数类型，用于通知上层（如桌面端发送事件）
 type LockCallback func()
@@ -198,6 +201,9 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 	dataKey, err := c.cryptoService.ParseDisplayKeyV2(displayKey)
 	if err != nil {
 		return nil, errors.New("恢复密钥格式不正确，应为 16 位字母数字")
+	}
+	if normalized, normErr := crypto.NormalizeDisplayKey(displayKey); normErr == nil && keypolicy.Check(normalized) != "" {
+		return nil, errWeakRecoveryKey
 	}
 
 	salt, err := c.cryptoService.GenerateSalt()
@@ -524,7 +530,17 @@ func (c *Core) startLockTimer() {
 
 // GenerateDataKey 生成一个新的恢复密钥（用于首次设置时）
 func (c *Core) GenerateDataKey() (string, error) {
-	return c.cryptoService.GenerateDataKey()
+	// 随机密钥极少数情况下会碰上“看起来有规律”的组合，重新生成即可
+	for i := 0; i < 20; i++ {
+		key, err := c.cryptoService.GenerateDataKey()
+		if err != nil {
+			return "", err
+		}
+		if keypolicy.Check(key) == "" {
+			return key, nil
+		}
+	}
+	return "", errors.New("无法生成恢复密钥，请重试")
 }
 
 // ============ 笔记相关（代理到 noteService）============

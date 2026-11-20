@@ -9,7 +9,7 @@ import (
 
 func TestFullBackupRestoresDatabaseAndKeepsCurrentPassword(t *testing.T) {
 	c := newTestCore(t)
-	if _, err := c.SetupPassword("master-pass", "", "ABCDEFGHJKMNPQRS"); err != nil {
+	if _, err := c.SetupPassword("master-pass", "", "K7MQ2X9P4R3WHT6N"); err != nil {
 		t.Fatal(err)
 	}
 	note, err := c.Notes().Create("备份笔记", "正文")

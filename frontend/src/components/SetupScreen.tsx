@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Lock, Eye, EyeOff, Key, AlertCircle, Check, RefreshCw, Copy } from 'lucide-react';
 import { useStore } from '../store';
 import { useI18n } from '../i18n';
-import { isValidRecoveryKey, normalizeRecoveryKey } from '../recoveryKey';
+import { isValidRecoveryKey, normalizeRecoveryKey, recoveryKeyWeakness } from '../recoveryKey';
 import { MIN_PASSWORD_LENGTH, copyWithAutoClear, generatePassphrase } from '../passphrase';
 import * as App from '../../wailsjs/go/main/App';
 
@@ -79,6 +79,10 @@ export function SetupScreen() {
 
     if (!isValidRecoveryKey(dataKey)) {
       setError(t.auth.dataKeyLengthError);
+      return;
+    }
+    if (recoveryKeyWeakness(dataKey)) {
+      setError(t.auth.dataKeyWeak);
       return;
     }
     setDataKey(normalizeRecoveryKey(dataKey));
@@ -280,6 +284,7 @@ export function SetupScreen() {
                     try {
                       const key = await App.GenerateDataKey();
                       setDataKey(key);
+                      setError('');
                     } catch (err) {
                       setError(`${t.auth.setupFailed}：${String(err)}`);
                     }
@@ -290,7 +295,11 @@ export function SetupScreen() {
                   <RefreshCw className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{t.auth.dataKeyLengthHint}</p>
+              {isValidRecoveryKey(dataKey) && recoveryKeyWeakness(dataKey) ? (
+                <p className="text-xs text-amber-600 mt-1">{t.auth.dataKeyWeak}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">{t.auth.dataKeyLengthHint}</p>
+              )}
             </div>
 
             {error && (

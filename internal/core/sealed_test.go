@@ -11,7 +11,7 @@ import (
 
 func TestSealAndOpenThroughCore(t *testing.T) {
 	c := newTestCore(t)
-	if _, err := c.SetupPassword("master-pass", "", "ABCDEFGHJKMNPQRS"); err != nil {
+	if _, err := c.SetupPassword("master-pass", "", "K7MQ2X9P4R3WHT6N"); err != nil {
 		t.Fatal(err)
 	}
 	src := filepath.Join(t.TempDir(), "note.txt")
@@ -34,11 +34,11 @@ func TestSealAndOpenThroughCore(t *testing.T) {
 	if err != nil || doc.Content != "secret" {
 		t.Fatalf("open data = %v, %v", doc, err)
 	}
-	doc, err = c.OpenSealedDataWithRecoveryKey(data, "ABCDEFGHJKMNPQRS")
+	doc, err = c.OpenSealedDataWithRecoveryKey(data, "K7MQ2X9P4R3WHT6N")
 	if err != nil || doc.Content != "secret" {
 		t.Fatalf("open with recovery key = %v, %v", doc, err)
 	}
-	if _, err := c.OpenSealedDataWithRecoveryKey(data, "23456789ABCDEFGH"); !errors.Is(err, sealedfile.ErrWrongKey) {
+	if _, err := c.OpenSealedDataWithRecoveryKey(data, "W4R8N2QX7K9M3TPZ"); !errors.Is(err, sealedfile.ErrWrongKey) {
 		t.Fatalf("wrong recovery key err = %v", err)
 	}
 	note, err := c.ImportSealedDocument(doc)
@@ -54,7 +54,7 @@ func TestSealAndOpenThroughCore(t *testing.T) {
 
 func TestExportNoteSealed(t *testing.T) {
 	c := newTestCore(t)
-	if _, err := c.SetupPassword("master-pass", "", "ABCDEFGHJKMNPQRS"); err != nil {
+	if _, err := c.SetupPassword("master-pass", "", "K7MQ2X9P4R3WHT6N"); err != nil {
 		t.Fatal(err)
 	}
 	note, err := c.Notes().Create("账号", "user: alice")
