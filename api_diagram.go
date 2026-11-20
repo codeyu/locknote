@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"errors"
-	"locknote/internal/fsutil"
+	"naishomemo/internal/fsutil"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"

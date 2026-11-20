@@ -157,7 +157,7 @@ export function LockScreen() {
           className="mb-2 text-center text-[28px] font-bold leading-tight text-gray-900"
           style={{ fontFamily: "'SF Pro Rounded', 'SF Pro Display', 'Inter', system-ui, sans-serif" }}
         >
-          LockNote
+          NaishoMemo
         </h1>
         <p className="text-center text-gray-500 mb-6">
           {pinChecked && mode === 'pin' && t.pin.unlockTitle}

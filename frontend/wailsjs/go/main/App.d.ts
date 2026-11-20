@@ -63,7 +63,7 @@ export function DisablePIN():Promise<void>;
 
 export function ExportDiagramSVG(arg1:string):Promise<string>;
 
-export function ExportNoteAsLockNote(arg1:string):Promise<main.SealedExportResult>;
+export function ExportNoteAsNaisho(arg1:string):Promise<main.SealedExportResult>;
 
 export function ExportNoteAsMarkdown(arg1:string):Promise<string>;
 

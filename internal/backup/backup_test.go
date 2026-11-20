@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"locknote/internal/crypto"
+	"naishomemo/internal/crypto"
 )
 
 type zipTestEntry struct {
@@ -42,7 +42,7 @@ func writeTestZip(t *testing.T, path string, entries []zipTestEntry) {
 
 func TestCreateBackupExcludesSensitiveFilesAndRestoreSnapshots(t *testing.T) {
 	dataDir := t.TempDir()
-	for _, name := range []string{"locknote.db", "data_key_verifier", "notes/note.enc", "restore-snapshots/123/notes/old.enc"} {
+	for _, name := range []string{"naishomemo.db", "data_key_verifier", "notes/note.enc", "restore-snapshots/123/notes/old.enc"} {
 		path := filepath.Join(dataDir, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 			t.Fatal(err)
@@ -160,7 +160,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 	}
 	dataDir := t.TempDir()
 	originalDB := []byte("existing db")
-	if err := os.WriteFile(filepath.Join(dataDir, "locknote.db"), originalDB, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dataDir, "naishomemo.db"), originalDB, 0600); err != nil {
 		t.Fatal(err)
 	}
 	originalVerifier := []byte("existing verifier")
@@ -172,7 +172,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 	backupPath := filepath.Join(t.TempDir(), "backup.zip")
 	writeTestZip(t, backupPath, []zipTestEntry{
 		{name: "notes/note.enc", data: ciphertext},
-		{name: "locknote.db", data: []byte("malicious db")},
+		{name: "naishomemo.db", data: []byte("malicious db")},
 		{name: "data_key_verifier", data: []byte("malicious verifier")},
 		{name: "../evil", data: []byte("outside")},
 	})
@@ -181,7 +181,7 @@ func TestRestoreBackupSkipsSensitiveAndTraversalEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, want := range map[string][]byte{
-		"locknote.db":       originalDB,
+		"naishomemo.db":     originalDB,
 		"data_key_verifier": originalVerifier,
 	} {
 		got, err := os.ReadFile(filepath.Join(dataDir, name))

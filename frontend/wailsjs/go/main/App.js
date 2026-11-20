@@ -106,8 +106,8 @@ export function ExportDiagramSVG(arg1) {
   return window['go']['main']['App']['ExportDiagramSVG'](arg1);
 }
 
-export function ExportNoteAsLockNote(arg1) {
-  return window['go']['main']['App']['ExportNoteAsLockNote'](arg1);
+export function ExportNoteAsNaisho(arg1) {
+  return window['go']['main']['App']['ExportNoteAsNaisho'](arg1);
 }
 
 export function ExportNoteAsMarkdown(arg1) {

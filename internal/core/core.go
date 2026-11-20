@@ -1,33 +1,34 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 // core 包提供与平台无关的核心业务逻辑，可被桌面端和移动端复用。
 package core
 
 import (
 	"errors"
 	"fmt"
-	"locknote/internal/attachments"
-	"locknote/internal/backup"
-	"locknote/internal/crypto"
-	"locknote/internal/database"
-	"locknote/internal/fsutil"
-	"locknote/internal/keypolicy"
-	"locknote/internal/notebooks"
-	"locknote/internal/notes"
-	"locknote/internal/quickunlock"
-	"locknote/internal/sleepwatch"
-	"locknote/internal/smartviews"
-	"locknote/internal/tags"
-	"locknote/internal/todos"
 	"log"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/backup"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/database"
+	"naishomemo/internal/fsutil"
+	"naishomemo/internal/keypolicy"
+	"naishomemo/internal/notebooks"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/quickunlock"
+	"naishomemo/internal/sleepwatch"
+	"naishomemo/internal/smartviews"
+	"naishomemo/internal/tags"
+	"naishomemo/internal/todos"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 )
 
-const dataKeyVerifierPlaintext = "LOCKNOTE_DATAKEY_VERIFY_V1"
+// DatabaseFileName 是数据目录中数据库文件的名字。
+const DatabaseFileName = "naishomemo.db"
+
+const dataKeyVerifierPlaintext = "NAISHOMEMO_DATAKEY_VERIFY_V1"
 const minPasswordLength = 8
 
 var errPasswordTooShort = errors.New("密码长度不能少于8个字符")
@@ -37,7 +38,7 @@ var errWeakRecoveryKey = errors.New("恢复密钥太容易被猜到（重复或�
 // LockCallback 是锁定时的回调函数类型，用于通知上层（如桌面端发送事件）
 type LockCallback func()
 
-// Core 是 LockNote 的核心业务逻辑层，与平台无关
+// Core 是 NaishoMemo 的核心业务逻辑层，与平台无关
 type Core struct {
 	db                *database.DB
 	cryptoService     *crypto.Service
@@ -94,14 +95,7 @@ func New(dataDir string) (*Core, error) {
 		return nil, fmt.Errorf("failed to create history dir: %w", err)
 	}
 
-	// 处理旧版数据库迁移
-	legacyDBPath := filepath.Join(dataDir, "notebase.db")
-	dbPath := filepath.Join(dataDir, "locknote.db")
-	if _, err := os.Stat(legacyDBPath); err == nil {
-		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-			_ = os.Rename(legacyDBPath, dbPath)
-		}
-	}
+	dbPath := filepath.Join(dataDir, DatabaseFileName)
 
 	db, err := database.New(dbPath)
 	if err != nil {
@@ -248,7 +242,7 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 		return nil, err
 	}
 
-	verifier, err := c.cryptoService.Encrypt(passwordKey, []byte("LOCKNOTE_VERIFY"))
+	verifier, err := c.cryptoService.Encrypt(passwordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +419,7 @@ func (c *Core) ChangePassword(oldPassword, newPassword, newHint string) error {
 		return err
 	}
 
-	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("LOCKNOTE_VERIFY"))
+	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		return err
 	}
@@ -471,7 +465,7 @@ func (c *Core) ResetPasswordWithDataKey(displayKey, newPassword, newHint string)
 		return err
 	}
 
-	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("LOCKNOTE_VERIFY"))
+	newVerifier, err := c.cryptoService.Encrypt(newPasswordKey, []byte("NAISHOMEMO_VERIFY"))
 	if err != nil {
 		c.mu.Unlock()
 		return err
@@ -646,12 +640,12 @@ func (c *Core) RestoreBackup(path string) error {
 
 // CreateBackup 创建完整备份：加密文件 + 数据库快照（待办、标签、笔记本等）。
 func (c *Core) CreateBackup(outputPath string) error {
-	tempDir, err := os.MkdirTemp("", "locknote-backup-*")
+	tempDir, err := os.MkdirTemp("", "naishomemo-backup-*")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(tempDir)
-	snapshotPath := filepath.Join(tempDir, "locknote.db")
+	snapshotPath := filepath.Join(tempDir, DatabaseFileName)
 	if err := c.db.SnapshotTo(snapshotPath); err != nil {
 		return fmt.Errorf("数据库快照失败: %w", err)
 	}

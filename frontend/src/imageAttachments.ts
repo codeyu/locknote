@@ -1,4 +1,4 @@
-export const ATTACHMENT_URI_PREFIX = 'locknote-attachment://';
+export const ATTACHMENT_URI_PREFIX = 'naisho-attachment://';
 
 export interface AttachmentReference {
   id: string;

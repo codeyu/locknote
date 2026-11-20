@@ -16,9 +16,9 @@ import { notes, tags } from '../../wailsjs/go/models';
 import * as App from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardGetText, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 
-const FONT_SCALE_STORAGE_KEY = 'locknote-editor-font-scale';
-const LINE_NUMBERS_STORAGE_KEY = 'locknote-editor-show-line-numbers';
-const LINE_NUMBERS_CHANGE_EVENT = 'locknote-editor-show-line-numbers-change';
+const FONT_SCALE_STORAGE_KEY = 'naishomemo-editor-font-scale';
+const LINE_NUMBERS_STORAGE_KEY = 'naishomemo-editor-show-line-numbers';
+const LINE_NUMBERS_CHANGE_EVENT = 'naishomemo-editor-show-line-numbers-change';
 const MAX_TITLE_LENGTH = 80;
 const HISTORY_BATCH_SIZE = 8;
 const MIN_FONT_SCALE = 0.8;
@@ -870,7 +870,7 @@ export function NoteEditor({
     try {
       // 先保存正在编辑的内容，确保导出的是最新版本
       await flushPendingSave();
-      const result = await App.ExportNoteAsLockNote(selectedNote.id);
+      const result = await App.ExportNoteAsNaisho(selectedNote.id);
       if (result) {
         const omitted = result.omittedImages > 0
           ? `\n${formatMessage(t.editor.exportSealedImagesOmitted, { count: result.omittedImages })}`

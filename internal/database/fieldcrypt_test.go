@@ -32,7 +32,7 @@ func (fakeCipher) Decrypt(c []byte) ([]byte, error) {
 
 func newFieldTestDB(t *testing.T) *DB {
 	t.Helper()
-	db, err := New(filepath.Join(t.TempDir(), "locknote.db"))
+	db, err := New(filepath.Join(t.TempDir(), "naishomemo.db"))
 	if err != nil {
 		t.Fatal(err)
 	}

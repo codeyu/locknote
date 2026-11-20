@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"locknote/internal/database"
+	"naishomemo/internal/database"
 )
 
 func newTestNotesService(t *testing.T) *Service {
 	t.Helper()
 
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}

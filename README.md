@@ -1,239 +1,60 @@
-# LockNote.app
+# NaishoMemo
 
 中文 | [English](./README.en.md)
 
-一个简单、可靠、离线优先，支持 Windows、macOS 和 Linux 的桌面加密笔记软件。
+离线优先的桌面加密笔记软件，支持 Windows、macOS 和 Linux。所有内容只保存在本机，用主密码和恢复密钥保护。
 
-官方网站：https://locknote.app
+NaishoMemo 基于 [LockNote](https://github.com/JackyZhang8/locknote)（MIT 许可）修改而来。
 
-作者：LockNote.app <support@locknote.app>
+## 功能
 
-![LockNote.app Screenshot](./screenshot/locknote-screen-cn.png)
+- **本地加密**：笔记正文、标题、待办、图片，以及标签名、笔记本名、附件文件名都用 AES-256-GCM 加密，密钥由 Argon2id 派生
+- **主密码 + 恢复密钥**：主密码至少 8 位，可一键生成 5 个单词组成的随机短语；恢复密钥为 16 位随机字符，可重置主密码
+- **PIN 快速解锁**：自动锁定后用 4–12 位数字解锁；程序重启或输错 5 次后需要主密码
+- **自动锁定**：闲置超时、最小化、系统休眠后自动锁定
+- **加密文件 `.naisho`**：把 `.txt` / `.md` 文件或单篇笔记（含图片）加密成单个文件，可双击打开、拖入窗口查看或导入
+- **拖入导入**：把一个或多个 Markdown / TXT 文件拖进窗口即新建笔记，自动识别 UTF-8、GBK、Big5 等编码
+- **Markdown 编辑器**：编辑、预览、分屏，目录，Mermaid 流程图，图片
+- **待办、日历、标签、笔记本、智能视图、历史版本、回收站**
+- **完整备份**：备份包含加密文件和数据库快照；恢复时保留当前主密码、PIN 和设置
 
-## 功能特性
+## 数据存放位置
 
-- **多平台桌面应用** - 发布包覆盖 Windows x64、macOS Apple Silicon、macOS Intel 和 Linux x64
-- **本地加密存储** - 笔记内容和本地图片附件使用 AES-256-GCM 加密，密钥由 Argon2id 派生
-- **离线优先** - 数据存储在本地，无需网络连接也可使用
-- **Markdown 编辑器** - 支持编辑、预览、分屏模式、可选行号，并提供常用格式化工具
-- **预览目录** - 根据 Markdown 标题自动生成 h1-h6 目录，支持折叠、展开和精准跳转；分屏模式默认收起
-- **Mermaid 流程图** - 支持 `mermaid` 和 `flowchart` 代码块，显示流程图与源代码切换，并支持缩放、重置和 SVG 另存为
-- **加密图片附件** - 支持粘贴、拖入或插入本地图片；图片仅在软件内显示时解密
-- **图片管理** - 以紧凑虚拟列表浏览本地加密图片，支持添加、复制引用、插入笔记和删除
-- **Markdown 导入导出** - 支持导入 Markdown；含图片笔记导出时自动生成带时间戳的 assets 文件夹
-- **笔记组织** - 支持笔记本、标签、最近编辑、置顶笔记和筛选管理
-- **待办管理** - 支持独立待办、优先级、截止时间、子任务、筛选和行内编辑
-- **日历视图** - 按日期查看笔记创建/编辑动态、到期待办和当天完成记录
-- **HeatMap 活动图** - 类 GitHub 热力图，基于笔记动态和完成待办展示活跃度
-- **全文搜索** - 搜索笔记标题、内容和标签
-- **历史版本** - 自动保存历史版本，支持回滚
-- **回收站** - 删除的笔记进入回收站，可恢复或永久删除
-- **备份恢复** - 支持创建加密备份、恢复数据，以及使用数据密钥导入备份；恢复前校验备份归属当前密码库，并保留可回滚快照
-- **启动体验** - 优化 Windows 首次冷启动，增加启动进度页和首次使用功能介绍
-- **安全设置** - 支持自动锁定弹窗、修改密码弹窗、恢复密钥、主题和语言切换
-- **编辑不丢稿** - 切换笔记、锁定、关闭窗口前都会先把待保存草稿写入磁盘
+所有数据都在用户目录下的 `.naishomemo` 文件夹中：
 
-## 技术栈
+| 平台 | 路径 |
+| --- | --- |
+| Windows | `C:\Users\<用户名>\.naishomemo` |
+| macOS / Linux | `~/.naishomemo` |
 
-- **后端**: Go + Wails v2
-- **前端**: React + TypeScript + TailwindCSS
-- **存储**: SQLite（元数据）+ 本地密文文件（笔记内容和图片附件）
-- **加密**: AES-256-GCM + Argon2id
-
-## 开发环境要求
-
-- Go 1.24+
-- Node.js 18+
-- Wails CLI v2
-- 当前系统对应的 Wails 平台构建工具
-
-## 安装 Wails CLI
-
-```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
-```
+备份时请复制整个文件夹，或使用“设置 → 备份 → 创建备份”。
 
 ## 开发
 
-```bash
-cd frontend
-npm install
-cd ..
+需要 Go 1.24+、Node.js 20+ 和 Wails CLI v2：
 
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 wails dev
 ```
 
-### 测试
-
-提交前建议跑一遍与 CI 相同的检查（`.github/workflows/ci.yml`）：
-
-```bash
-# 后端
-go vet ./internal/... .
-go test ./internal/... .
-
-# 前端
-cd frontend
-npx tsc --noEmit
-npm test
-```
-
-`npm test` 会先用 `tsconfig.test.json` 把测试编译到 `.test-dist`，再用 Node 内置测试运行器执行；测试需要以 `frontend/` 为工作目录运行。
-
-### Mermaid 流程图
-
-在 Markdown 中使用 `mermaid` 或 `flowchart` fenced code block 插入流程图。`flowchart` 标记可以在标记后指定方向，例如 `TD`、`LR`、`BT` 或 `RL`；未指定时默认使用 `TD`。
-
-````markdown
-```flowchart TD
-    A[用户输入] --> B[解析输入]
-    B --> C{是否有效}
-    C -->|是| D[继续处理]
-    C -->|否| E[返回错误]
-```
-````
-
-预览时可以在图表和代码之间切换，使用缩放、重置按钮调整图表显示。点击下载会打开系统“另存为”对话框，保存完整 SVG 文件。
-
-## 构建
+打包：
 
 ```bash
 wails build
 ```
 
-如需按平台构建，可使用辅助脚本：
+提交前运行与 CI 相同的检查：
 
 ```bash
-./build.sh darwin arm64
-./build.sh darwin x86_64
-./build.sh windows amd64
-./build.sh linux amd64
-./build.sh all
+go vet ./internal/... .
+go test ./internal/... .
+
+cd frontend
+npx tsc --noEmit
+npm test
 ```
 
-更多构建参数见 [build.md](./build.md) 和 [build.sh](./build.sh)。
+## 许可
 
-## 下载与运行
-
-请从 [GitHub Releases](https://github.com/JackyZhang8/locknote/releases) 下载对应系统的 zip 包。
-
-| 系统 | 发布文件 | 运行方式 |
-| --- | --- | --- |
-| Windows x64 | `locknote-windows-amd64.zip` | 解压后运行 `LockNote.exe` |
-| macOS Apple Silicon | `locknote-darwin-arm64.zip` | 解压后打开 `LockNote.app` |
-| macOS Intel | `locknote-darwin-x86_64.zip` | 解压后打开 `LockNote.app` |
-| Linux x64 | `locknote-linux-amd64.zip` | 解压后执行 `./LockNote` |
-
-### Windows 注意事项
-
-从 GitHub Release 下载的 .zip/.exe 可能会被 Windows 标记为“来自互联网”(MOTW)，导致：
-
-- 弹出“Windows 已保护你的电脑”(SmartScreen)
-- 第一次启动较慢/卡住（安全扫描 + WebView2 初始化）
-
-解决办法（任选其一）：
-
-1. 推荐：先对 zip 解除锁定，再解压
-
-   - 右键 zip -> 属性 -> 勾选/点击“解除锁定(Unblock)” -> 应用
-
-2. 或者：解压后对 exe 解除锁定
-
-   - 右键 exe -> 属性 -> “解除锁定(Unblock)” -> 应用
-
-3. PowerShell（可选）：
-
-```powershell
-Unblock-File .\LockNote.exe
-# 或对整个解压目录：
-Get-ChildItem -Recurse | Unblock-File
-```
-
-### macOS 注意事项
-
-- Apple Silicon 机型使用 `locknote-darwin-arm64.zip`，Intel 机型使用 `locknote-darwin-x86_64.zip`。
-- 发布包内是 `LockNote.app`。
-- 如果 macOS 仍拦截启动，可在“系统设置 -> 隐私与安全性”中允许打开。请只对官方 Release 页面下载的包执行该操作。
-
-### Linux 注意事项
-
-```bash
-unzip locknote-linux-amd64.zip
-chmod +x LockNote
-./LockNote
-```
-
-Linux 版本需要 GTK 3 和 WebKitGTK 运行库。不同发行版包名可能不同；Ubuntu/Debian 通常可使用：
-
-```bash
-sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37
-```
-
-## 项目结构
-
-```
-locknote/
-├── main.go                 # 应用入口
-├── app.go                  # 应用核心逻辑
-├── api.go                  # API 方法
-├── api_diagram.go          # 桌面 SVG 导出接口
-├── build.sh                # 多平台构建脚本
-├── internal/
-│   ├── attachments/        # 加密图片附件
-│   ├── backup/             # 备份服务
-│   ├── core/               # 共享领域类型
-│   ├── crypto/             # 加密模块
-│   ├── database/           # SQLite 数据库
-│   ├── fsutil/             # 原子文件写入
-│   ├── markdown/           # Markdown 标题提取
-│   ├── notebooks/          # 笔记本服务
-│   ├── notes/              # 笔记服务
-│   ├── smartviews/         # 智能视图
-│   ├── tags/               # 标签服务
-│   ├── todos/              # 待办服务
-│   └── version/            # 版本号单一来源
-├── mobile/                 # 移动端桥接包
-├── tests/source/           # 跨文件源码契约测试
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React 组件
-│   │   ├── i18n/           # 多语言资源
-│   │   ├── store/          # Zustand 状态管理
-│   │   └── assets/         # 前端资源
-│   ├── wailsjs/            # 生成的 Wails 绑定
-│   └── ...
-└── docs/
-    ├── INTRO.en.md         # 英文介绍
-    └── INTRO.zh-CN.md      # 中文介绍
-```
-
-根目录保留 Wails 入口及同包 API；依赖未导出函数的单元测试随实现保留在根目录。
-源码契约测试统一位于 tests/source/，可运行 go test ./tests/source；完整 Go 测试运行 go test ./...。
-
-## 安全模型
-
-LockNote 使用加密密钥保护笔记正文、标题和预览、历史版本、附件及缩略图，以及待办事项标题。标签名称、笔记本名称、附件原始文件名、智能视图筛选条件、密码提示、时间戳及文件数量和大小不加密。
-
-备份仅包含笔记、历史版本和附件，不包含标签、笔记本、待办事项、设置或数据库。**“恢复备份”仅适用于同一密码库的备份**；要迁移到其他设备或使用不同密钥，请选择“用恢复密钥导入”。如果密码和恢复密钥都丢失，数据将按设计无法恢复。
-
-- 主密钥仅在解锁后驻留内存，锁定后立即清零
-- 每篇笔记使用独立随机 nonce
-- 恢复密钥为 16 位 Crockford Base32，dataKey 由 Argon2id 派生（旧密码库自动兼容）
-- 密文文件采用 `fsync + rename` 原子写入，断电不会留下空文件
-- 密码库写入前会检查是否已存在，避免误覆盖主密钥
-- 数据库迁移带版本号，迁移失败会阻止启动，而不是静默降级成空列表
-- 恢复备份前会校验备份是否属于当前密码库，并保留可回滚快照
-- 支持恢复密钥重置密码
-
-## 更新日志
-
-- [v1.1.0](./CHANGELOG-1.1.0.zh-CN.md)
-- [v1.0.9](./CHANGELOG-1.0.9.zh-CN.md)
-
-## 版本
-
-v1.1.0
-
-## 许可证
-
-MIT。详见 [LICENSE](./LICENSE)。
+MIT。见 [LICENSE](./LICENSE)，其中保留了原项目 LockNote 的版权声明。

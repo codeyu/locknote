@@ -173,7 +173,7 @@ export const enUS: Translations = {
     exportMarkdownItem: 'Export Markdown',
     exportMarkdownItemDesc: 'Plain .md file, images exported alongside',
     exportSealedItem: 'Encrypted export (.naisho)',
-    exportSealedItemDesc: 'Only your LockNote can open it; images are encrypted too',
+    exportSealedItemDesc: 'Only your NaishoMemo can open it; images are encrypted too',
     exportSealedImagesOmitted: 'Note: {count} image(s) could not be found and were not included in the encrypted file.',
     diagram: {
       chart: 'Diagram',
@@ -398,7 +398,7 @@ export const enUS: Translations = {
   sealed: {
     sectionTitle: 'File encryption',
     sealTitle: 'Encrypt a text file',
-    sealDesc: 'Turn a .txt / .md file into a .naisho file that only your LockNote can open',
+    sealDesc: 'Turn a .txt / .md file into a .naisho file that only your NaishoMemo can open',
     sealButton: 'Choose file and encrypt',
     removeOriginal: 'Delete the original after encrypting',
     sealSuccess: 'Encrypted to: {path}',
@@ -489,7 +489,7 @@ export const enUS: Translations = {
     version: 'Version',
     mode: 'Mode',
     modePrivate: 'Private',
-    website: 'Website',
+    website: 'Project page',
     legal: 'Legal',
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
@@ -512,7 +512,7 @@ export const enUS: Translations = {
 
   // Auth/Unlock
   auth: {
-    welcome: 'Welcome to LockNote',
+    welcome: 'Welcome to NaishoMemo',
     welcomeBack: 'Welcome back',
     setupPassword: 'Set Master Password',
     setupPasswordDesc: 'The master password is used to sign in. Please remember it.',

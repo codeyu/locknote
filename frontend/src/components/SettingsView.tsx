@@ -18,8 +18,9 @@ interface SettingsTabItem {
   icon: LucideIcon;
 }
 
-const LINE_NUMBERS_STORAGE_KEY = 'locknote-editor-show-line-numbers';
-const LINE_NUMBERS_CHANGE_EVENT = 'locknote-editor-show-line-numbers-change';
+const PROJECT_URL = 'https://github.com/codeyu/locknote';
+const LINE_NUMBERS_STORAGE_KEY = 'naishomemo-editor-show-line-numbers';
+const LINE_NUMBERS_CHANGE_EVENT = 'naishomemo-editor-show-line-numbers-change';
 const selectControlClassName = 'w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm font-medium text-gray-800 shadow-sm transition-all hover:border-primary-300 focus:border-accent focus:outline-none focus:ring-4 focus:ring-primary-100';
 const textInputControlClassName = 'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm transition-all placeholder:text-gray-400 hover:border-primary-300 focus:border-accent focus:outline-none focus:ring-4 focus:ring-primary-100';
 
@@ -379,34 +380,10 @@ export function SettingsView() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t.settings.website}</span>
                     <button
-                      onClick={() => BrowserOpenURL('https://locknote.app')}
+                      onClick={() => BrowserOpenURL(PROJECT_URL)}
                       className="text-sm text-gray-600 hover:text-accent hover:underline font-medium"
                     >
-                      https://locknote.app
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-800">{t.settings.legal}</div>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => BrowserOpenURL('https://locknote.app/privacy')}
-                      className="text-sm text-gray-600 hover:text-accent hover:underline"
-                    >
-                      {t.settings.privacy}
-                    </button>
-                    <button
-                      onClick={() => BrowserOpenURL('https://locknote.app/terms')}
-                      className="text-sm text-gray-600 hover:text-accent hover:underline"
-                    >
-                      {t.settings.terms}
-                    </button>
-                    <button
-                      onClick={() => BrowserOpenURL('https://locknote.app/disclaimer')}
-                      className="text-sm text-gray-600 hover:text-accent hover:underline"
-                    >
-                      {t.settings.disclaimer}
+                      {PROJECT_URL.replace('https://', '')}
                     </button>
                   </div>
                 </div>

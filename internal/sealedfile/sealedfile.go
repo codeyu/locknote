@@ -1,12 +1,12 @@
 // Package sealedfile 实现单文件加密格式（.naisho）。
 //
 // 一个 .naisho 文件保存一篇文本笔记，用密码库的 dataKey（AES-256-GCM）加密，
-// 只能由同一个密码库（或输入同一恢复密钥的 LockNote）打开。
+// 只能由同一个密码库（或输入同一恢复密钥的 NaishoMemo）打开。
 //
 // 文件布局：
 //
 //	offset  size  内容
-//	0       8     魔数 "LOCKNOTE"
+//	0       8     魔数 "NAISHOMO"
 //	8       1     格式版本（当前为 1）
 //	9       1     密钥类型（1 = 密码库 dataKey）
 //	10      2     保留，必须为 0
@@ -32,15 +32,15 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"locknote/internal/fsutil"
-	"locknote/internal/markdown"
+	"naishomemo/internal/fsutil"
+	"naishomemo/internal/markdown"
 )
 
 const (
 	// Extension 是加密文件的扩展名。
 	Extension = ".naisho"
 
-	magic          = "LOCKNOTE"
+	magic          = "NAISHOMO"
 	formatVersion  = byte(1)
 	keyKindVault   = byte(1)
 	headerSize     = 12
@@ -58,11 +58,11 @@ const (
 )
 
 var (
-	ErrNotSealedFile      = errors.New("不是 LockNote 加密文件")
-	ErrUnsupportedVersion = errors.New("加密文件版本过新，请升级 LockNote")
+	ErrNotSealedFile      = errors.New("不是 NaishoMemo 加密文件")
+	ErrUnsupportedVersion = errors.New("加密文件版本过新，请升级 NaishoMemo")
 	ErrWrongKey           = errors.New("无法解密：该文件不属于当前密码库，或文件已损坏")
 	ErrInvalidKey         = errors.New("密钥长度不正确")
-	ErrAlreadySealed      = errors.New("该文件已经是 LockNote 加密文件")
+	ErrAlreadySealed      = errors.New("该文件已经是 NaishoMemo 加密文件")
 	ErrNotRegularFile     = errors.New("只能加密普通文件")
 	ErrTooLarge           = fmt.Errorf("文件过大，最大支持 %d MB", MaxPlaintextSize>>20)
 	ErrEmptyFile          = errors.New("文件为空")

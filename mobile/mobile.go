@@ -5,12 +5,12 @@ package mobile
 import (
 	"encoding/json"
 	"fmt"
-	"locknote/internal/core"
-	"locknote/internal/database"
-	"locknote/internal/notes"
-	"locknote/internal/smartviews"
-	"locknote/internal/tags"
-	"locknote/internal/todos"
+	"naishomemo/internal/core"
+	"naishomemo/internal/database"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/smartviews"
+	"naishomemo/internal/tags"
+	"naishomemo/internal/todos"
 	"sync"
 	"time"
 
@@ -67,7 +67,7 @@ func mobileCallValue[T any](operation string, fallback T, fn func() T) (value T)
 	defer mobileMu.Unlock()
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			fmt.Printf("locknote mobile %s panic: %v\n", operation, recovered)
+			fmt.Printf("naishomemo mobile %s panic: %v\n", operation, recovered)
 			value = fallback
 		}
 	}()
@@ -79,7 +79,7 @@ func mobileCallVoid(operation string, fn func()) {
 	defer mobileMu.Unlock()
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			fmt.Printf("locknote mobile %s panic: %v\n", operation, recovered)
+			fmt.Printf("naishomemo mobile %s panic: %v\n", operation, recovered)
 			// No error channel exists for these gomobile void APIs.
 		}
 	}()
@@ -122,7 +122,7 @@ func IsFirstRun() bool {
 		}
 		isFirstRun, err := coreInstance.IsFirstRun()
 		if err != nil {
-			fmt.Printf("locknote mobile IsFirstRun error: %v\n", err)
+			fmt.Printf("naishomemo mobile IsFirstRun error: %v\n", err)
 			return false
 		}
 		return isFirstRun

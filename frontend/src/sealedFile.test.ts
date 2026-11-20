@@ -12,7 +12,7 @@ test('isSealedFileName matches the .naisho extension case-insensitively', () => 
 test('isWrongVaultError detects the backend wrong-key message', () => {
   assert.equal(isWrongVaultError('无法解密：该文件不属于当前密码库，或文件已损坏'), true);
   assert.equal(isWrongVaultError(new Error('无法解密：该文件不属于当前密码库，或文件已损坏')), true);
-  assert.equal(isWrongVaultError('不是 LockNote 加密文件'), false);
+  assert.equal(isWrongVaultError('不是 NaishoMemo 加密文件'), false);
   assert.equal(isWrongVaultError(undefined), false);
 });
 

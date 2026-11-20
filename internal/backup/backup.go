@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package backup
 
 import (
@@ -8,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"locknote/internal/crypto"
-	"locknote/internal/fsutil"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/fsutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -28,22 +26,18 @@ var (
 	restoreSnapshotKeep = 3
 
 	sensitiveFiles = map[string]bool{
-		"locknote.db":         true,
-		"locknote.db-journal": true,
-		"locknote.db-wal":     true,
-		"locknote.db-shm":     true,
-		"notebase.db":         true,
-		"notebase.db-journal": true,
-		"notebase.db-wal":     true,
-		"notebase.db-shm":     true,
-		"data_key_verifier":   true,
+		"naishomemo.db":         true,
+		"naishomemo.db-journal": true,
+		"naishomemo.db-wal":     true,
+		"naishomemo.db-shm":     true,
+		"data_key_verifier":     true,
 	}
 )
 
 // DatabaseSnapshotEntry 是备份 zip 中数据库快照的路径。
 // 快照包含待办、标签、笔记本、智能视图、附件信息和笔记元数据（敏感字段本身已加密）。
 // 恢复时它不会被直接复制到数据目录，而是交给调用方按表导入。
-const DatabaseSnapshotEntry = "database/locknote.db"
+const DatabaseSnapshotEntry = "database/naishomemo.db"
 
 type Service struct {
 	dataDir string
@@ -91,7 +85,7 @@ func safeZipDestination(root, name string) (string, string, bool) {
 }
 
 func (s *Service) ExtractBackupToTemp(inputPath string) (string, error) {
-	tempDir, err := os.MkdirTemp("", "locknote-import-*")
+	tempDir, err := os.MkdirTemp("", "naishomemo-import-*")
 	if err != nil {
 		return "", err
 	}

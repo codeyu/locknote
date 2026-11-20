@@ -42,7 +42,7 @@ func TestFormatAssetsDirNameUsesMinuteTimestamp(t *testing.T) {
 }
 
 func TestRewriteMarkdownAttachmentLinksUsesRelativeAssetsPath(t *testing.T) {
-	content := "![blockcell-logo.png](locknote-attachment://98d30eae-af3c-4651-b6d3-02c23276f386)"
+	content := "![blockcell-logo.png](naisho-attachment://98d30eae-af3c-4651-b6d3-02c23276f386)"
 	fileNames := map[string]string{
 		"98d30eae-af3c-4651-b6d3-02c23276f386": "blockcell-logo.png",
 	}
@@ -56,9 +56,9 @@ func TestRewriteMarkdownAttachmentLinksUsesRelativeAssetsPath(t *testing.T) {
 
 func TestCollectAttachmentIDsDeduplicatesInEncounterOrder(t *testing.T) {
 	content := strings.Join([]string{
-		"![first](locknote-attachment://a)",
-		"![second](locknote-attachment://b)",
-		"![again](locknote-attachment://a)",
+		"![first](naisho-attachment://a)",
+		"![second](naisho-attachment://b)",
+		"![again](naisho-attachment://a)",
 	}, "\n")
 
 	ids := collectAttachmentIDs(content)

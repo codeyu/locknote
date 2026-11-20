@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"locknote/internal/attachments"
-	"locknote/internal/notes"
-	"locknote/internal/sealedfile"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/sealedfile"
 )
 
 var errVaultLocked = errors.New("请先解锁")
@@ -115,7 +115,7 @@ func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, erro
 			return nil, fmt.Errorf("导入图片 %s 失败: %w", a.Name, err)
 		}
 		created = append(created, att.ID)
-		content = strings.ReplaceAll(content, "locknote-attachment://"+a.ID, "locknote-attachment://"+att.ID)
+		content = strings.ReplaceAll(content, "naisho-attachment://"+a.ID, "naisho-attachment://"+att.ID)
 	}
 
 	note, err := c.noteService.Create(doc.Title, content)
@@ -132,7 +132,7 @@ func (c *Core) ImportSealedDocument(doc *sealedfile.Document) (*notes.Note, erro
 }
 
 // attachmentRefPattern 匹配笔记正文中的图片引用，与 api.go 的 attachmentURLPattern 一致。
-var attachmentRefPattern = regexp.MustCompile(`locknote-attachment://([A-Za-z0-9_-]+)`)
+var attachmentRefPattern = regexp.MustCompile(`naisho-attachment://([A-Za-z0-9_-]+)`)
 
 func attachmentRefs(content string) []string {
 	seen := map[string]bool{}

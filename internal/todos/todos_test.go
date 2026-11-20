@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"locknote/internal/crypto"
-	"locknote/internal/database"
+	"naishomemo/internal/crypto"
+	"naishomemo/internal/database"
 )
 
 func TestTodoServiceCreatesStandaloneTodosAndSubtasks(t *testing.T) {
 	tempDir := t.TempDir()
 
-	db, err := database.New(filepath.Join(tempDir, "locknote-test.db"))
+	db, err := database.New(filepath.Join(tempDir, "naishomemo-test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestTodoServiceCreatesStandaloneTodosAndSubtasks(t *testing.T) {
 func TestTodoServiceReturnsStandaloneTodoPayload(t *testing.T) {
 	tempDir := t.TempDir()
 
-	db, err := database.New(filepath.Join(tempDir, "locknote-test.db"))
+	db, err := database.New(filepath.Join(tempDir, "naishomemo-test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestTodoServiceReturnsStandaloneTodoPayload(t *testing.T) {
 func TestTodoServiceListsNewestTodosFirst(t *testing.T) {
 	tempDir := t.TempDir()
 
-	db, err := database.New(filepath.Join(tempDir, "locknote-test.db"))
+	db, err := database.New(filepath.Join(tempDir, "naishomemo-test.db"))
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

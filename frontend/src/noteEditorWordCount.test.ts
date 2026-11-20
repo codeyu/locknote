@@ -26,7 +26,7 @@ test('word count labels are localized for Chinese and English', () => {
 });
 
 test('note editor can render optional line numbers beside the markdown textarea', () => {
-  assert.equal(/const LINE_NUMBERS_STORAGE_KEY = 'locknote-editor-show-line-numbers';/.test(editorSource), true);
+  assert.equal(/const LINE_NUMBERS_STORAGE_KEY = 'naishomemo-editor-show-line-numbers';/.test(editorSource), true);
   assert.equal(/const \[showLineNumbers, setShowLineNumbers\] = useState\(true\)/.test(editorSource), true);
   assert.equal(/const editorLineNumbers = content\.split\('\\n'\)/.test(editorSource), true);
   assert.equal(/setShowLineNumbers\(saved !== 'false'\)/.test(editorSource), true);

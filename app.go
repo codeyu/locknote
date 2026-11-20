@@ -1,6 +1,4 @@
-//  https://github.com/JackyZhang8/locknote
-//  一个简单、可靠、离线优先的桌面加密笔记软件。
-//  A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 
 package main
 
@@ -8,9 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"locknote/internal/core"
-	"locknote/internal/version"
 	"log"
+	"naishomemo/internal/core"
+	"naishomemo/internal/version"
 	"os"
 	"path/filepath"
 	"sync"
@@ -46,15 +44,7 @@ func NewApp() *App {
 	if err != nil {
 		homeDir = "."
 	}
-	dataDir := filepath.Join(homeDir, ".naisho")
-	legacyDir := filepath.Join(homeDir, ".notebase")
-	if _, err := os.Stat(legacyDir); err == nil {
-		if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-			if err := os.Rename(legacyDir, dataDir); err != nil {
-				dataDir = legacyDir
-			}
-		}
-	}
+	dataDir := filepath.Join(homeDir, ".naishomemo")
 	app := &App{
 		dataDir:   dataDir,
 		coreReady: make(chan struct{}),
@@ -107,7 +97,7 @@ func (a *App) startCoreInitialization(ctx context.Context) {
 			if ctx != nil {
 				runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
 					Type:    runtime.ErrorDialog,
-					Title:   "LockNote",
+					Title:   "NaishoMemo",
 					Message: fmt.Sprintf("Failed to initialize: %v", err),
 				})
 			}

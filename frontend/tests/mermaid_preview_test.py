@@ -17,7 +17,7 @@ FLOWCHART = (FRONTEND / 'tests/fixtures/skills-flowchart.txt').read_text()
 class MermaidPreviewTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temp = tempfile.TemporaryDirectory(prefix='locknote-preview-')
+        cls.temp = tempfile.TemporaryDirectory(prefix='naishomemo-preview-')
         cls.output = Path(cls.temp.name)
         harness = """
 import React from 'react';

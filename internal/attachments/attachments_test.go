@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"locknote/internal/attachments"
-	"locknote/internal/database"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/database"
 )
 
 func testImageJPEG(t *testing.T, width, height int) []byte {
@@ -40,7 +40,7 @@ func testImageJPEG(t *testing.T, width, height int) []byte {
 
 func TestServiceEncryptsImageOnDiskAndDecryptsDataURL(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestServiceEncryptsImageOnDiskAndDecryptsDataURL(t *testing.T) {
 
 func TestServiceCreatesEncryptedImageThumbnailDataURL(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestServiceCreatesEncryptedImageThumbnailDataURL(t *testing.T) {
 
 func TestServiceListsAndDeletesEncryptedImages(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestServiceListsAndDeletesEncryptedImages(t *testing.T) {
 
 func TestServiceSoftDeletesRestoresAndPermanentlyDeletesImages(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestServiceSoftDeletesRestoresAndPermanentlyDeletesImages(t *testing.T) {
 
 func TestServiceSetsImageFavorite(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}
@@ -340,7 +340,7 @@ func TestServiceSetsImageFavorite(t *testing.T) {
 
 func TestServiceCreatesImageFromDataURL(t *testing.T) {
 	dataDir := t.TempDir()
-	db, err := database.New(filepath.Join(dataDir, "locknote.db"))
+	db, err := database.New(filepath.Join(dataDir, "naishomemo.db"))
 	if err != nil {
 		t.Fatalf("open database: %v", err)
 	}

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"locknote/internal/quickunlock"
+	"naishomemo/internal/quickunlock"
 )
 
 // PIN 快速解锁

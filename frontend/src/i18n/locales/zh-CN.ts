@@ -171,7 +171,7 @@ export const zhCN = {
     exportMarkdownItem: '导出 Markdown',
     exportMarkdownItemDesc: '明文 .md 文件，图片一起导出',
     exportSealedItem: '加密导出（.naisho）',
-    exportSealedItemDesc: '只有你的 LockNote 能打开，图片一起加密',
+    exportSealedItemDesc: '只有你的 NaishoMemo 能打开，图片一起加密',
     exportSealedImagesOmitted: '注意：有 {count} 张图片已找不到，没有包含在加密文件中。',
     diagram: {
       chart: '图表',
@@ -396,7 +396,7 @@ export const zhCN = {
   sealed: {
     sectionTitle: '文件加密',
     sealTitle: '加密文本文件',
-    sealDesc: '把 .txt / .md 文件加密为 .naisho 文件，只有你的 LockNote 能打开',
+    sealDesc: '把 .txt / .md 文件加密为 .naisho 文件，只有你的 NaishoMemo 能打开',
     sealButton: '选择文件并加密',
     removeOriginal: '加密成功后删除原文件',
     sealSuccess: '已加密为：{path}',
@@ -487,7 +487,7 @@ export const zhCN = {
     version: '版本',
     mode: '模式',
     modePrivate: '私密',
-    website: 'LockNote官网',
+    website: '项目主页',
     legal: '法律',
     privacy: '隐私政策',
     terms: '服务条款',
@@ -510,7 +510,7 @@ export const zhCN = {
 
   // 登录/解锁
   auth: {
-    welcome: '欢迎使用 LockNote',
+    welcome: '欢迎使用 NaishoMemo',
     welcomeBack: '欢迎回来',
     setupPassword: '设置主密码',
     setupPasswordDesc: '主密码用于登录笔记软件，请牢记此密码',

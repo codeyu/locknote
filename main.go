@@ -1,6 +1,4 @@
-// https://github.com/JackyZhang8/locknote
-// 一个简单、可靠、离线优先的桌面加密笔记软件。
-// A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 package main
 
 import (
@@ -21,7 +19,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "LockNote.app",
+		Title:  "NaishoMemo",
 		Width:  1200,
 		Height: 800,
 		AssetServer: &assetserver.Options{
@@ -39,7 +37,7 @@ func main() {
 		},
 		// 只允许运行一个实例：程序已打开时再双击 .naisho 文件，交给已运行的窗口处理
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId:               "app.locknote.single-instance",
+			UniqueId:               "app.naishomemo.single-instance",
 			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
 		},
 		Mac: &mac.Options{

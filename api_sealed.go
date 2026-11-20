@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"locknote/internal/notes"
-	"locknote/internal/sealedfile"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/sealedfile"
 
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -87,9 +87,9 @@ func (a *App) ChooseSealedFile() (string, error) {
 	}
 	a.UpdateActivity()
 	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "打开 LockNote 加密文件",
+		Title: "打开 NaishoMemo 加密文件",
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LockNote 加密文件 (*.naisho)", Pattern: "*.naisho"},
+			{DisplayName: "NaishoMemo 加密文件 (*.naisho)", Pattern: "*.naisho"},
 		},
 	})
 }
@@ -212,8 +212,8 @@ type SealedExportResult struct {
 	OmittedImages int `json:"omittedImages"`
 }
 
-// ExportNoteAsLockNote 把当前笔记加密导出为 .naisho 文件。用户取消时返回 nil, nil。
-func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
+// ExportNoteAsNaisho 把当前笔记加密导出为 .naisho 文件。用户取消时返回 nil, nil。
+func (a *App) ExportNoteAsNaisho(noteID string) (*SealedExportResult, error) {
 	c, err := a.coreOrErr()
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (a *App) ExportNoteAsLockNote(noteID string) (*SealedExportResult, error) {
 		Title:           "加密导出笔记",
 		DefaultFilename: sanitizeFileName(note.Title) + sealedfile.Extension,
 		Filters: []runtime.FileFilter{
-			{DisplayName: "LockNote 加密文件 (*.naisho)", Pattern: "*.naisho"},
+			{DisplayName: "NaishoMemo 加密文件 (*.naisho)", Pattern: "*.naisho"},
 		},
 	})
 	if err != nil {
@@ -281,7 +281,7 @@ func (a *App) TakePendingSealedFile() string {
 	return p
 }
 
-// onFileOpen 处理 macOS 的“用 LockNote 打开”事件。
+// onFileOpen 处理 macOS 的“用 NaishoMemo 打开”事件。
 func (a *App) onFileOpen(path string) {
 	a.queueSealedFiles([]string{path})
 	a.focusWindow()

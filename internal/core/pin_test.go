@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"locknote/internal/quickunlock"
+	"naishomemo/internal/quickunlock"
 )
 
 func TestPINUnlockLifecycle(t *testing.T) {

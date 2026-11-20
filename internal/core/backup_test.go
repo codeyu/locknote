@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"locknote/internal/todos"
+	"naishomemo/internal/todos"
 )
 
 func TestFullBackupRestoresDatabaseAndKeepsCurrentPassword(t *testing.T) {

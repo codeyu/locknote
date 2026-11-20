@@ -3,7 +3,7 @@ package core
 import (
 	"log"
 
-	"locknote/internal/crypto"
+	"naishomemo/internal/crypto"
 )
 
 // vaultFieldCipher 用 dataKey 加解密数据库中的短字段（标签名、笔记本名等）。

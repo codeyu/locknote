@@ -85,7 +85,7 @@ func TestOpenRejectsWrongKeyTamperingAndForeignFiles(t *testing.T) {
 		t.Fatalf("newer version: err = %v", err)
 	}
 
-	for _, foreign := range [][]byte{nil, []byte("hello"), []byte("LOCKNOTE"), []byte("PK\x03\x04zip")} {
+	for _, foreign := range [][]byte{nil, []byte("hello"), []byte("NAISHOMO"), []byte("PK\x03\x04zip")} {
 		if _, err := Open(testKey, foreign); !errors.Is(err, ErrNotSealedFile) {
 			t.Fatalf("foreign %q: err = %v", foreign, err)
 		}
@@ -258,7 +258,7 @@ func TestAttachmentsRoundTrip(t *testing.T) {
 	png := []byte("\x89PNG\r\n\x1a\nfake-image-bytes")
 	doc := Document{
 		Title:   "带图片",
-		Content: "看图 ![a](locknote-attachment://img-1)",
+		Content: "看图 ![a](naisho-attachment://img-1)",
 		Attachments: []Attachment{
 			{ID: "img-1", Name: "a.png", MIMEType: "image/png", Data: png},
 		},

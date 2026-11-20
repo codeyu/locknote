@@ -10,8 +10,8 @@ test('LockScreen uses the latest app icon for the lock page brand mark', () => {
   assert.equal(/<Lock className=/.test(source), false);
 });
 
-test('LockScreen title follows the iOS rounded bold LockNote styling', () => {
-  assert.equal(/>\s*LockNote\s*<\/h1>/.test(source), true);
+test('LockScreen title follows the iOS rounded bold NaishoMemo styling', () => {
+  assert.equal(/>\s*NaishoMemo\s*<\/h1>/.test(source), true);
   assert.equal(/fontFamily:\s*"'SF Pro Rounded'/.test(source), true);
   assert.equal(/font-bold/.test(source), true);
 });

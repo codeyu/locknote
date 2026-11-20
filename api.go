@@ -1,20 +1,18 @@
-//  https://github.com/JackyZhang8/locknote
-//  一个简单、可靠、离线优先的桌面加密笔记软件。
-//  A simple, reliable, offline-first encrypted note-taking desktop app.
+// NaishoMemo — 基于 LockNote（https://github.com/JackyZhang8/locknote，MIT 许可）修改。
 
 package main
 
 import (
 	"errors"
-	"locknote/internal/attachments"
-	"locknote/internal/database"
-	"locknote/internal/fsutil"
-	"locknote/internal/markdown"
-	"locknote/internal/notebooks"
-	"locknote/internal/notes"
-	"locknote/internal/smartviews"
-	"locknote/internal/tags"
-	"locknote/internal/todos"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/database"
+	"naishomemo/internal/fsutil"
+	"naishomemo/internal/markdown"
+	"naishomemo/internal/notebooks"
+	"naishomemo/internal/notes"
+	"naishomemo/internal/smartviews"
+	"naishomemo/internal/tags"
+	"naishomemo/internal/todos"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -407,7 +405,7 @@ func (a *App) CreateBackup() (string, error) {
 
 	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:           "保存备份文件",
-		DefaultFilename: "LockNote.app-backup.zip",
+		DefaultFilename: "NaishoMemo-backup.zip",
 		Filters: []runtime.FileFilter{
 			{DisplayName: "ZIP 文件", Pattern: "*.zip"},
 		},
@@ -535,7 +533,7 @@ func sanitizeFileName(name string) string {
 	return name
 }
 
-var attachmentURLPattern = regexp.MustCompile(`locknote-attachment://([A-Za-z0-9_-]+)`)
+var attachmentURLPattern = regexp.MustCompile(`naisho-attachment://([A-Za-z0-9_-]+)`)
 
 func formatAssetsDirName(t time.Time) string {
 	return "assets_" + t.Format("200601021504")

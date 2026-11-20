@@ -142,7 +142,7 @@ test('auto lock opens a modal dialog for editing lock settings', () => {
 });
 
 test('settings view persists the editor line number preference', () => {
-  assert.equal(/const LINE_NUMBERS_STORAGE_KEY = 'locknote-editor-show-line-numbers';/.test(settingsSource), true);
+  assert.equal(/const LINE_NUMBERS_STORAGE_KEY = 'naishomemo-editor-show-line-numbers';/.test(settingsSource), true);
   assert.equal(/const \[showLineNumbers, setShowLineNumbers\] = useState\(true\)/.test(settingsSource), true);
   assert.equal(/localStorage\.setItem\(LINE_NUMBERS_STORAGE_KEY, value \? 'true' : 'false'\)/.test(settingsSource), true);
   assert.equal(/window\.dispatchEvent\(new Event\(LINE_NUMBERS_CHANGE_EVENT\)\)/.test(settingsSource), true);

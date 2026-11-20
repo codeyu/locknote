@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"locknote/internal/attachments"
-	"locknote/internal/sealedfile"
+	"naishomemo/internal/attachments"
+	"naishomemo/internal/sealedfile"
 )
 
 func TestSealAndOpenThroughCore(t *testing.T) {
@@ -84,7 +84,7 @@ func TestExportAndImportNoteWithImages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	content := "看图 ![截图](locknote-attachment://" + img.ID + ") 和 ![丢失](locknote-attachment://missing-id)"
+	content := "看图 ![截图](naisho-attachment://" + img.ID + ") 和 ![丢失](naisho-attachment://missing-id)"
 	note, err := c.Notes().Create("带图片", content)
 	if err != nil {
 		t.Fatal(err)

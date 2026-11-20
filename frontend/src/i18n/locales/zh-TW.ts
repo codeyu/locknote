@@ -173,7 +173,7 @@ export const zhTW: Translations = {
     exportMarkdownItem: '匯出 Markdown',
     exportMarkdownItemDesc: '明文 .md 檔案，圖片一起匯出',
     exportSealedItem: '加密匯出（.naisho）',
-    exportSealedItemDesc: '只有你的 LockNote 能開啟，圖片一起加密',
+    exportSealedItemDesc: '只有你的 NaishoMemo 能開啟，圖片一起加密',
     exportSealedImagesOmitted: '注意：有 {count} 張圖片已找不到，沒有包含在加密檔案中。',
     diagram: {
       chart: '圖表',
@@ -398,7 +398,7 @@ export const zhTW: Translations = {
   sealed: {
     sectionTitle: '檔案加密',
     sealTitle: '加密文字檔',
-    sealDesc: '把 .txt / .md 檔案加密為 .naisho 檔案，只有你的 LockNote 能開啟',
+    sealDesc: '把 .txt / .md 檔案加密為 .naisho 檔案，只有你的 NaishoMemo 能開啟',
     sealButton: '選擇檔案並加密',
     removeOriginal: '加密成功後刪除原檔案',
     sealSuccess: '已加密為：{path}',
@@ -489,7 +489,7 @@ export const zhTW: Translations = {
     version: '版本',
     mode: '模式',
     modePrivate: '私密',
-    website: '官網',
+    website: '專案主頁',
     legal: '法律',
     privacy: '隱私權政策',
     terms: '服務條款',
@@ -512,7 +512,7 @@ export const zhTW: Translations = {
 
   // 登入/解鎖
   auth: {
-    welcome: '歡迎使用 LockNote',
+    welcome: '歡迎使用 NaishoMemo',
     welcomeBack: '歡迎回來',
     setupPassword: '設定主密碼',
     setupPasswordDesc: '主密碼用於登入筆記軟體，請牢記此密碼',
