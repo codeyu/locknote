@@ -19,6 +19,8 @@ export function BatchAddTagToNotes(arg1:Array<string>,arg2:string):Promise<void>
 
 export function BatchDeleteNotes(arg1:Array<string>):Promise<void>;
 
+export function CanUnlockWithPIN():Promise<boolean>;
+
 export function ChangePassword(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ChooseSealedFile():Promise<string>;
@@ -56,6 +58,8 @@ export function DeleteTodo(arg1:string):Promise<void>;
 export function DeleteTodoSubtask(arg1:string):Promise<void>;
 
 export function DetachAttachmentFromNote(arg1:string,arg2:string):Promise<void>;
+
+export function DisablePIN():Promise<void>;
 
 export function ExportDiagramSVG(arg1:string):Promise<string>;
 
@@ -96,6 +100,8 @@ export function ImportSealedFile(arg1:string,arg2:string):Promise<notes.Note>;
 export function IsCoreReady():Promise<boolean>;
 
 export function IsFirstRun():Promise<boolean>;
+
+export function IsPINEnabled():Promise<boolean>;
 
 export function IsUnlocked():Promise<boolean>;
 
@@ -157,6 +163,8 @@ export function SetNotebookPinned(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetNotesNotebook(arg1:Array<string>,arg2:any):Promise<void>;
 
+export function SetPIN(arg1:string):Promise<void>;
+
 export function SetTodoCompleted(arg1:string,arg2:boolean):Promise<todos.Todo>;
 
 export function SetTodoSubtaskCompleted(arg1:string,arg2:boolean):Promise<todos.Subtask>;
@@ -170,6 +178,8 @@ export function SoftDeleteNote(arg1:string):Promise<void>;
 export function TakePendingSealedFile():Promise<string>;
 
 export function Unlock(arg1:string):Promise<boolean>;
+
+export function UnlockWithPIN(arg1:string):Promise<boolean>;
 
 export function UpdateActivity():Promise<void>;
 

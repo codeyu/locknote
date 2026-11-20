@@ -5,6 +5,7 @@ import { formatMessage, useI18n, type Language } from '../i18n';
 import { themeOptions, useTheme } from '../theme';
 import { BackupView } from './BackupView';
 import { TrashView } from './TrashView';
+import { PinSettingsCard } from './PinSettingsCard';
 import * as App from '../../wailsjs/go/main/App';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { MIN_PASSWORD_LENGTH } from '../passphrase';
@@ -312,6 +313,8 @@ export function SettingsView() {
                   </button>
                 </div>
               </div>
+
+              <PinSettingsCard />
 
               <div className="p-6 border border-gray-200 rounded-xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

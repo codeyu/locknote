@@ -18,6 +18,10 @@ export function BatchDeleteNotes(arg1) {
   return window['go']['main']['App']['BatchDeleteNotes'](arg1);
 }
 
+export function CanUnlockWithPIN() {
+  return window['go']['main']['App']['CanUnlockWithPIN']();
+}
+
 export function ChangePassword(arg1, arg2, arg3) {
   return window['go']['main']['App']['ChangePassword'](arg1, arg2, arg3);
 }
@@ -92,6 +96,10 @@ export function DeleteTodoSubtask(arg1) {
 
 export function DetachAttachmentFromNote(arg1, arg2) {
   return window['go']['main']['App']['DetachAttachmentFromNote'](arg1, arg2);
+}
+
+export function DisablePIN() {
+  return window['go']['main']['App']['DisablePIN']();
 }
 
 export function ExportDiagramSVG(arg1) {
@@ -172,6 +180,10 @@ export function IsCoreReady() {
 
 export function IsFirstRun() {
   return window['go']['main']['App']['IsFirstRun']();
+}
+
+export function IsPINEnabled() {
+  return window['go']['main']['App']['IsPINEnabled']();
 }
 
 export function IsUnlocked() {
@@ -294,6 +306,10 @@ export function SetNotesNotebook(arg1, arg2) {
   return window['go']['main']['App']['SetNotesNotebook'](arg1, arg2);
 }
 
+export function SetPIN(arg1) {
+  return window['go']['main']['App']['SetPIN'](arg1);
+}
+
 export function SetTodoCompleted(arg1, arg2) {
   return window['go']['main']['App']['SetTodoCompleted'](arg1, arg2);
 }
@@ -320,6 +336,10 @@ export function TakePendingSealedFile() {
 
 export function Unlock(arg1) {
   return window['go']['main']['App']['Unlock'](arg1);
+}
+
+export function UnlockWithPIN(arg1) {
+  return window['go']['main']['App']['UnlockWithPIN'](arg1);
 }
 
 export function UpdateActivity() {

@@ -14,6 +14,7 @@ import (
 	"locknote/internal/fsutil"
 	"locknote/internal/notebooks"
 	"locknote/internal/notes"
+	"locknote/internal/quickunlock"
 	"locknote/internal/smartviews"
 	"locknote/internal/tags"
 	"locknote/internal/todos"
@@ -56,6 +57,9 @@ type Core struct {
 	lastActivity          time.Time
 	lockTimer             *time.Timer
 	lockCallback          LockCallback
+
+	// quickUnlock 在内存中保存用 PIN 包裹的 dataKey，程序退出即失效
+	quickUnlock *quickunlock.State
 }
 
 // SetupResult 是初始化密码后的返回结果
@@ -107,6 +111,7 @@ func New(dataDir string) (*Core, error) {
 		dataDir:           dataDir,
 		lastActivity:      time.Now(),
 	}
+	c.quickUnlock = quickunlock.New(c.cryptoService.DeriveKey)
 
 	return c, nil
 }
@@ -115,6 +120,7 @@ func New(dataDir string) (*Core, error) {
 func (c *Core) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.quickUnlock.Disarm()
 	if c.lockTimer != nil {
 		c.lockTimer.Stop()
 	}
@@ -290,6 +296,9 @@ func (c *Core) Unlock(password string) (bool, error) {
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
+	// 主密码解锁后，如已设置 PIN，则在内存中准备 PIN 快速解锁
+	c.armPINFromStorage(dataKey)
+
 	// startLockTimer 内部会获取锁，必须在释放锁后调用
 	c.startLockTimer()
 
@@ -441,6 +450,8 @@ func (c *Core) ResetPasswordWithDataKey(displayKey, newPassword, newHint string)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
 	c.mu.Unlock()
+
+	c.armPINFromStorage(dataKey)
 
 	// startLockTimer 内部会获取锁，必须在释放锁后调用
 	c.startLockTimer()

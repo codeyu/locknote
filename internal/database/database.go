@@ -308,6 +308,7 @@ func (d *DB) addNotebookIdColumn() error {
 		{"notebooks", "updated_at", `ALTER TABLE notebooks ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`},
 		{"notes", "encrypted_title", `ALTER TABLE notes ADD COLUMN encrypted_title BLOB`},
 		{"notes", "encrypted_preview", `ALTER TABLE notes ADD COLUMN encrypted_preview BLOB`},
+		{"settings", "encrypted_pin", `ALTER TABLE settings ADD COLUMN encrypted_pin BLOB`},
 	} {
 		if err := d.ensureColumn(migration.table, migration.name, migration.statement); err != nil {
 			return err
