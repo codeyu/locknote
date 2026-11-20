@@ -98,10 +98,14 @@ func parseNullableAttachmentTime(value any) (*time.Time, error) {
 }
 
 func (d *DB) CreateAttachment(a *AttachmentMeta) error {
-	_, err := d.db.Exec(`
-		INSERT INTO attachments (id, original_name, mime_type, size, width, height, cipher_path, sha256, favorite, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, a.ID, a.OriginalName, a.MIMEType, a.Size, a.Width, a.Height, a.CipherPath, a.SHA256, boolToInt(a.Favorite), a.CreatedAt, a.UpdatedAt)
+	name, nameEnc, err := d.sealField(a.OriginalName, "")
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec(`
+		INSERT INTO attachments (id, original_name, mime_type, size, width, height, cipher_path, sha256, favorite, created_at, updated_at, original_name_enc)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, a.ID, name, a.MIMEType, a.Size, a.Width, a.Height, a.CipherPath, a.SHA256, boolToInt(a.Favorite), a.CreatedAt, a.UpdatedAt, nameEnc)
 	return err
 }
 
@@ -111,14 +115,18 @@ func (d *DB) GetAttachment(id string) (*AttachmentMeta, error) {
 	var updatedAtAny any
 	var deletedAtAny any
 	var favoriteInt int
+	var nameEnc []byte
 	err := d.db.QueryRow(`
 		SELECT a.id, a.original_name, a.mime_type, a.size, COALESCE(a.width, 0), COALESCE(a.height, 0),
 			a.cipher_path, COALESCE(a.sha256, ''), COALESCE(a.favorite, 0), a.created_at, a.updated_at, a.deleted_at,
-			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id)
+			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id), a.original_name_enc
 		FROM attachments a
 		WHERE a.id = ?
-	`, id).Scan(&a.ID, &a.OriginalName, &a.MIMEType, &a.Size, &a.Width, &a.Height, &a.CipherPath, &a.SHA256, &favoriteInt, &createdAtAny, &updatedAtAny, &deletedAtAny, &a.ReferenceCount)
+	`, id).Scan(&a.ID, &a.OriginalName, &a.MIMEType, &a.Size, &a.Width, &a.Height, &a.CipherPath, &a.SHA256, &favoriteInt, &createdAtAny, &updatedAtAny, &deletedAtAny, &a.ReferenceCount, &nameEnc)
 	if err != nil {
+		return nil, err
+	}
+	if a.OriginalName, err = d.openField(a.OriginalName, nameEnc); err != nil {
 		return nil, err
 	}
 	a.Favorite = favoriteInt != 0
@@ -138,7 +146,7 @@ func (d *DB) ListAttachments() ([]*AttachmentMeta, error) {
 	rows, err := d.db.Query(`
 		SELECT a.id, a.original_name, a.mime_type, a.size, COALESCE(a.width, 0), COALESCE(a.height, 0),
 			a.cipher_path, COALESCE(a.sha256, ''), COALESCE(a.favorite, 0), a.created_at, a.updated_at, a.deleted_at,
-			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id)
+			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id), a.original_name_enc
 		FROM attachments a
 		WHERE a.deleted_at IS NULL
 		ORDER BY a.created_at DESC
@@ -150,7 +158,7 @@ func (d *DB) ListDeletedAttachments() ([]*AttachmentMeta, error) {
 	rows, err := d.db.Query(`
 		SELECT a.id, a.original_name, a.mime_type, a.size, COALESCE(a.width, 0), COALESCE(a.height, 0),
 			a.cipher_path, COALESCE(a.sha256, ''), COALESCE(a.favorite, 0), a.created_at, a.updated_at, a.deleted_at,
-			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id)
+			(SELECT COUNT(*) FROM note_attachments na WHERE na.attachment_id = a.id), a.original_name_enc
 		FROM attachments a
 		WHERE a.deleted_at IS NOT NULL
 		ORDER BY a.deleted_at DESC
@@ -171,7 +179,11 @@ func (d *DB) scanAttachmentRows(rows rowsScanner, err error) ([]*AttachmentMeta,
 		var updatedAtAny any
 		var deletedAtAny any
 		var favoriteInt int
-		if err := rows.Scan(&a.ID, &a.OriginalName, &a.MIMEType, &a.Size, &a.Width, &a.Height, &a.CipherPath, &a.SHA256, &favoriteInt, &createdAtAny, &updatedAtAny, &deletedAtAny, &a.ReferenceCount); err != nil {
+		var nameEnc []byte
+		if err := rows.Scan(&a.ID, &a.OriginalName, &a.MIMEType, &a.Size, &a.Width, &a.Height, &a.CipherPath, &a.SHA256, &favoriteInt, &createdAtAny, &updatedAtAny, &deletedAtAny, &a.ReferenceCount, &nameEnc); err != nil {
+			return nil, err
+		}
+		if a.OriginalName, err = d.openField(a.OriginalName, nameEnc); err != nil {
 			return nil, err
 		}
 		a.Favorite = favoriteInt != 0

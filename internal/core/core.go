@@ -67,6 +67,9 @@ type Core struct {
 
 	// sleepWatcher 检测系统睡眠，用于“休眠后锁定”
 	sleepWatcher *sleepwatch.Watcher
+
+	// fieldCipher 解锁期间供数据库层加解密元数据字段
+	fieldCipher *vaultFieldCipher
 }
 
 // SetupResult 是初始化密码后的返回结果
@@ -264,6 +267,7 @@ func (c *Core) SetupPassword(password, hint, displayKey string) (*SetupResult, e
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
@@ -326,6 +330,7 @@ func (c *Core) Unlock(password string) (bool, error) {
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
@@ -353,6 +358,7 @@ func (c *Core) Lock() {
 	c.noteService.SetMasterKey(nil)
 	c.todoService.SetMasterKey(nil)
 	c.attachmentService.SetMasterKey(nil)
+	c.clearFieldCipherLocked()
 	if c.lockTimer != nil {
 		c.lockTimer.Stop()
 	}
@@ -482,6 +488,7 @@ func (c *Core) ResetPasswordWithDataKey(displayKey, newPassword, newHint string)
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.mu.Unlock()
 
 	c.armPINFromStorage(dataKey)
@@ -626,6 +633,10 @@ func (c *Core) RestoreBackup(path string) error {
 	}
 	if err := c.backupService.RestoreBackupWithDatabase(path, c.cryptoService, key, c.db.RestoreFromSnapshot); err != nil {
 		return err
+	}
+	// 旧版本备份里的元数据可能是明文，恢复后补加密
+	if _, err := c.db.EncryptLegacyFields(); err != nil {
+		log.Printf("[Fields] encrypt restored legacy fields failed: %v", err)
 	}
 	c.noteService.ClearContentCache()
 	return nil

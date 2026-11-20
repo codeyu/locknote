@@ -85,6 +85,7 @@ func (c *Core) UnlockWithPIN(pin string) (bool, error) {
 	c.noteService.SetMasterKey(dataKey)
 	c.todoService.SetMasterKey(dataKey)
 	c.attachmentService.SetMasterKey(dataKey)
+	c.installFieldCipherLocked(dataKey)
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
